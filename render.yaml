@@ -3,6 +3,11 @@ services:
     name: myenglishjourney-backend
     runtime: node
     plan: free
+    # Ohio is the closest Render region to Brazil/South America (Oregon,
+    # Frankfurt and Singapore are all farther). Render does not support
+    # changing a running service's region in place — this only takes effect
+    # if the service is recreated from this Blueprint.
+    region: ohio
     buildCommand: npm install && npm run build:backend
     startCommand: npm run start:backend
     envVars:
