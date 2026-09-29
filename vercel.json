@@ -1,7 +1,7 @@
 {
   "build": {
     "env": {
-      "VITE_API_BASE_URL": "https://myenglishjourney-sxhe.onrender.com"
+      "VITE_API_BASE_URL": "https://myenglishjourney1.onrender.com"
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]

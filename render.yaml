@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: myenglishjourney-backend
+    name: myenglishjourney1
     runtime: node
     plan: free
     # Ohio is the closest Render region to Brazil/South America (Oregon,
