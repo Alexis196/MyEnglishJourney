@@ -51,8 +51,12 @@ export class AIRouter {
       );
     }
 
-    const providerOrder: AIProvider[] =
-      budget.settings.provider_mode === "gemini_only"
+    // Audio input isn't implemented for OpenAIProvider (it would need a separate
+    // transcription call via a different API) — audio requests always go to Gemini,
+    // regardless of the user's configured provider_mode.
+    const providerOrder: AIProvider[] = request.audio
+      ? [this.gemini]
+      : budget.settings.provider_mode === "gemini_only"
         ? [this.gemini]
         : budget.settings.provider_mode === "openai_only"
           ? [this.openai]

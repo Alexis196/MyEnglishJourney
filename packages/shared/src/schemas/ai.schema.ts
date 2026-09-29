@@ -45,6 +45,35 @@ export const writingFeedbackSchema = z.object({
 });
 export type WritingFeedback = z.infer<typeof writingFeedbackSchema>;
 
+/**
+ * Structured JSON contract for Speaking Lab analysis. Deliberately named and
+ * shaped around the TRANSCRIPT — this never claims to evaluate real
+ * pronunciation/phonetics, only the content of what the student said
+ * (grammar, vocabulary, phrasing), consistent with the product spec.
+ */
+export const speakingFeedbackSchema = z.object({
+  transcript: z.string(),
+  translation: z.string(),
+  grammarErrors: z.array(
+    z.object({
+      original: z.string(),
+      corrected: z.string(),
+      explanation: z.string(),
+    }),
+  ),
+  vocabularySuggestions: z.array(
+    z.object({
+      word: z.string(),
+      meaning: z.string(),
+      example: z.string(),
+    }),
+  ),
+  moreNaturalExpression: z.string(),
+  encouragingNote: z.string(),
+  recommendation: z.string(),
+});
+export type SpeakingFeedback = z.infer<typeof speakingFeedbackSchema>;
+
 export const userAiSettingsSchema = z.object({
   providerMode: aiProviderModeSchema,
   monthlyBudgetUsd: z.number().nonnegative(),

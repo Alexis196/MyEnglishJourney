@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { isSupabaseConfigured, isAiConfigured } from "../config/env.js";
+import { isSupabaseConfigured, isAiConfigured, isGeminiConfigured } from "../config/env.js";
 import { ServiceUnavailableError } from "../utils/AppError.js";
 
 const checks = {
@@ -16,6 +16,16 @@ const checks = {
       : new ServiceUnavailableError(
           "Ningún proveedor de IA está configurado (GEMINI_API_KEY / OPENAI_API_KEY). Consultá el README.",
           "ai_not_configured",
+        ),
+  // Audio-input features (Speaking Lab) only work through Gemini — OpenAI has no
+  // audio path in this codebase, so an OpenAI-only setup should fail clearly here
+  // rather than produce a generic "failed" analysis at request time.
+  gemini: () =>
+    isGeminiConfigured
+      ? null
+      : new ServiceUnavailableError(
+          "Esta función requiere Gemini configurado (GEMINI_API_KEY) — no funciona solo con OpenAI. Consultá el README.",
+          "gemini_not_configured",
         ),
 };
 

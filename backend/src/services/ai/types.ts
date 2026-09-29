@@ -9,6 +9,12 @@ export interface AITokenUsage {
   totalTokens: number;
 }
 
+export interface AIAudioInput {
+  mimeType: string;
+  /** Base64-encoded raw audio bytes (no data: URL prefix). */
+  base64Data: string;
+}
+
 export interface AIGenerationRequest<T> {
   activityType: AIActivityType;
   systemPrompt: string;
@@ -17,6 +23,12 @@ export interface AIGenerationRequest<T> {
   userId: string;
   temperature?: number;
   maxOutputTokens?: number;
+  /**
+   * When set, routes exclusively to Gemini — audio input is not implemented
+   * for OpenAIProvider in this codebase (it would need a separate
+   * transcription step via a different API). See AIRouter.generate.
+   */
+  audio?: AIAudioInput;
 }
 
 export interface AIGenerationResult<T> {

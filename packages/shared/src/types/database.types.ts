@@ -113,6 +113,18 @@ export interface AiUsageLogRow {
   created_at: string;
 }
 
+export interface SpeakingSessionRow {
+  id: string;
+  user_id: string;
+  lesson_id: string | null;
+  audio_storage_path: string | null;
+  duration_seconds: number | null;
+  transcript: string | null;
+  ai_feedback: Record<string, unknown> | null;
+  status: "recorded" | "transcribing" | "analyzed" | "failed";
+  created_at: string;
+}
+
 export interface UserAiSettingsRow {
   user_id: string;
   provider_mode: "auto" | "gemini_only" | "openai_only";

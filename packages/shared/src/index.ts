@@ -9,5 +9,6 @@ export * from "./schemas/lesson.schema.js";
 export * from "./schemas/exerciseAttempt.schema.js";
 export * from "./schemas/ai.schema.js";
 export * from "./schemas/dashboard.schema.js";
+export * from "./schemas/speaking.schema.js";
 
 export * from "./types/database.types.js";

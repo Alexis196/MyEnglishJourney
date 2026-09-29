@@ -26,8 +26,15 @@ export class GeminiProvider implements AIProvider {
       },
     });
 
+    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+      { text: request.userPrompt },
+    ];
+    if (request.audio) {
+      parts.push({ inlineData: { mimeType: request.audio.mimeType, data: request.audio.base64Data } });
+    }
+
     const start = Date.now();
-    const result = await model.generateContent(request.userPrompt);
+    const result = await model.generateContent(parts);
     const latencyMs = Date.now() - start;
     const response = result.response;
 

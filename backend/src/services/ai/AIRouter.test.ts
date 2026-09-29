@@ -183,4 +183,18 @@ describe("AIRouter", () => {
     expect(result.provider).toBe("openai");
     expect(gemini.generateStructured).not.toHaveBeenCalled();
   });
+
+  it("routes audio requests to Gemini only, even in auto mode with openai available", async () => {
+    allowBudget({ provider_mode: "auto" });
+    const gemini = makeProvider("gemini");
+    const openai = makeProvider("openai");
+    gemini.generateStructured.mockResolvedValue(fakeResult("gemini"));
+
+    const router = new AIRouter(gemini, openai);
+    const request = { ...fakeRequest(), audio: { mimeType: "audio/webm", base64Data: "ZmFrZQ==" } };
+    const result = await router.generate(fakeSupabase, request);
+
+    expect(result.provider).toBe("gemini");
+    expect(openai.generateStructured).not.toHaveBeenCalled();
+  });
 });

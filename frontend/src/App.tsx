@@ -9,6 +9,7 @@ import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { ProgramOverviewPage } from "./pages/program/ProgramOverviewPage";
 import { LessonPlayerPage } from "./pages/program/LessonPlayerPage";
 import { ProfilePage } from "./pages/profile/ProfilePage";
+import { SpeakingLabPage } from "./pages/speaking/SpeakingLabPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 export function App() {
@@ -30,6 +31,7 @@ export function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/program" element={<ProgramOverviewPage />} />
           <Route path="/program/lessons/:lessonId" element={<LessonPlayerPage />} />
+          <Route path="/speaking" element={<SpeakingLabPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 

@@ -13,7 +13,10 @@ export function createApp() {
 
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
-  app.use(express.json({ limit: "1mb" }));
+  // 12mb accommodates base64-encoded Speaking Lab audio (capped at 8MB of base64
+  // text by submitSpeakingRecordingSchema) plus JSON overhead; every other route
+  // sends far smaller payloads.
+  app.use(express.json({ limit: "12mb" }));
   app.use(pinoHttp({ logger, autoLogging: { ignore: (req: express.Request) => req.url === "/api/health" } }));
 
   // Generous but real ceiling against abusive/looping clients; AI-specific spend

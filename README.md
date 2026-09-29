@@ -95,7 +95,7 @@ confusa. Sin ninguna key de IA, los ejercicios de `free_writing` se guardan con
    ```
 
    **Opción B — SQL Editor manual:** copiá y ejecutá, en orden, cada archivo de
-   `supabase/migrations/0001_...sql` a `0017_...sql` en el SQL Editor del dashboard de Supabase.
+   `supabase/migrations/0001_...sql` a `0018_...sql` en el SQL Editor del dashboard de Supabase.
 
 4. (Opcional) Datos de ejemplo: registrate primero desde la app (paso siguiente), copiá tu
    `user id` desde Authentication → Users, pegalo en `supabase/seed.sql` reemplazando el UUID
@@ -138,8 +138,10 @@ una ruta protegida.
   - `AIUsageService`: cálculo de costo contra la tabla de precios, bloqueo de presupuesto, y registro de éxitos/fallos.
 - **Build/typecheck**: `npm run build` y `npm run typecheck` verdes en los tres workspaces.
 - **Arranque real**: el backend compilado (`dist/server.js`) se probó sin ningún `.env` — `/api/health` responde `200` con las banderas de configuración en `false`, y un endpoint protegido como `/api/dashboard/summary` responde `503` con un mensaje claro en vez de un error genérico.
-- **Verificado contra un proyecto Supabase real** (además de los tests mockeados): las 17 migraciones se aplicaron sin errores; el trigger `handle_new_user` crea el `profiles` automáticamente al registrar un usuario; `/api/auth/me` y `/api/dashboard/summary` responden correctamente con un JWT real emitido por Supabase Auth; y se confirmó el aislamiento de RLS entre dos usuarios reales (el usuario B recibe `[]` al intentar leer el perfil del usuario A, y ve el suyo propio sin problema). La API key de Gemini también se validó contra `generativelanguage.googleapis.com`.
-- **No verificado todavía**: una llamada real de evaluación de IA de punta a punta (requiere sembrar una clase completa) y el fallback real a OpenAI (no se cargó esa key). El mecanismo está cubierto por los tests unitarios con proveedores mockeados.
+- **Verificado contra un proyecto Supabase real** (además de los tests mockeados): las 18 migraciones se aplicaron sin errores; el trigger `handle_new_user` crea el `profiles` automáticamente al registrar un usuario; `/api/auth/me` y `/api/dashboard/summary` responden correctamente con un JWT real emitido por Supabase Auth; y se confirmó el aislamiento de RLS entre dos usuarios reales (el usuario B recibe `[]` al intentar leer el perfil del usuario A, y ve el suyo propio sin problema). La API key de Gemini también se validó contra `generativelanguage.googleapis.com`.
+- **Generación de plan verificada end-to-end**: se generó un plan de 90 días real (60 lección/12 repaso/12 descanso/6 evaluación) con Gemini, incluyendo la clase completa del día 1, y se enviaron respuestas reales a los 4 tipos de ejercicio implementados — incluyendo free writing con errores gramaticales deliberados, que la IA detectó y corrigió correctamente sin fingir que estaba perfecto.
+- **Speaking Lab verificado end-to-end**: se subió un audio a Supabase Storage (bucket privado `speaking-audio`, políticas RLS por carpeta de usuario), se envió a Gemini como audio inline, y se persistió el resultado. Con un tono sintético (sin habla real, ya que este entorno no tiene micrófono), la IA correctamente reportó que no detectó habla en vez de inventar una transcripción — confirma que el pipeline completo (audio → Storage → Gemini → persistencia) funciona; la calidad de transcripción con voz real queda para que la pruebes vos desde el navegador.
+- **No verificado todavía**: el fallback real a OpenAI (no se cargó esa key — cubierto por tests unitarios con proveedores mockeados) y la calidad de transcripción de Speaking Lab con voz humana real.
 
 ## Alcance de esta fase (Fase 1)
 
@@ -150,9 +152,10 @@ una ruta protegida.
 - Dashboard con datos reales de Supabase (sin métricas simuladas) y estados vacíos diseñados.
 - Programa de 90 días: estructura de semanas/días, reproductor de clases paso a paso con guardado automático de progreso.
 - 4 de los 10 tipos de ejercicio: multiple choice, fill-in-blank, traducción (ambas direcciones) — auto-corregidos — y free writing evaluado por IA con feedback estructurado (errores gramaticales vs alternativas naturales vs recomendación).
+- Generación real del plan de 90 días con IA: a partir de nivel actual/objetivo, minutos diarios y áreas de enfoque, Gemini genera el esqueleto completo de 90 días (con relleno automático si el modelo entrega menos) y la clase completa del día 1.
+- Speaking Lab: grabación de audio en el navegador (MediaRecorder), subida a un bucket privado de Supabase Storage con políticas RLS por usuario, y análisis por IA enviando el audio directamente a Gemini (transcripción + errores gramaticales + vocabulario sugerido + expresión más natural + traducción). Deja explícito en la UI que analiza la transcripción, no la pronunciación real. El fallback a OpenAI no aplica acá (no tiene entrada de audio en esta implementación) — estas solicitudes siempre van a Gemini.
 
 **Deliberadamente pendiente para próximas iteraciones** (con su tabla ya lista en el esquema):
-- Speaking Lab (grabación de audio, transcripción, Supabase Storage con políticas privadas).
 - Vocabulary Bank con repetición espaciada (UI; el algoritmo SM-2 y la tabla ya existen).
 - Error Journal alimentando la regeneración del plan de estudio.
 - Pantalla de Estadísticas con Recharts (necesita historial real acumulado).

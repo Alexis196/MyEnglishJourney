@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, GraduationCap } from "lucide-react";
+import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, GraduationCap, Mic } from "lucide-react";
 import { cn } from "../../utils/cn";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/program", label: "Programa 90 días", icon: BookOpen },
+  { to: "/speaking", label: "Speaking Lab", icon: Mic },
   { to: "/profile", label: "Perfil", icon: User },
 ];
 
