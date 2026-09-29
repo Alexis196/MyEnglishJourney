@@ -138,7 +138,8 @@ una ruta protegida.
   - `AIUsageService`: cálculo de costo contra la tabla de precios, bloqueo de presupuesto, y registro de éxitos/fallos.
 - **Build/typecheck**: `npm run build` y `npm run typecheck` verdes en los tres workspaces.
 - **Arranque real**: el backend compilado (`dist/server.js`) se probó sin ningún `.env` — `/api/health` responde `200` con las banderas de configuración en `false`, y un endpoint protegido como `/api/dashboard/summary` responde `503` con un mensaje claro en vez de un error genérico.
-- **No verificado en esta sesión** (requiere un proyecto Supabase real y credenciales de IA): login/registro end-to-end, políticas RLS contra dos usuarios reales, y una llamada real a Gemini/OpenAI. Los pasos exactos para verificarlo están en este README y en `docs/rls-verification.md`.
+- **Verificado contra un proyecto Supabase real** (además de los tests mockeados): las 17 migraciones se aplicaron sin errores; el trigger `handle_new_user` crea el `profiles` automáticamente al registrar un usuario; `/api/auth/me` y `/api/dashboard/summary` responden correctamente con un JWT real emitido por Supabase Auth; y se confirmó el aislamiento de RLS entre dos usuarios reales (el usuario B recibe `[]` al intentar leer el perfil del usuario A, y ve el suyo propio sin problema). La API key de Gemini también se validó contra `generativelanguage.googleapis.com`.
+- **No verificado todavía**: una llamada real de evaluación de IA de punta a punta (requiere sembrar una clase completa) y el fallback real a OpenAI (no se cargó esa key). El mecanismo está cubierto por los tests unitarios con proveedores mockeados.
 
 ## Alcance de esta fase (Fase 1)
 
