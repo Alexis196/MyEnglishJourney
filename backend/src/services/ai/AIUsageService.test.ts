@@ -73,7 +73,7 @@ describe("AIUsageService.logSuccess", () => {
     await AIUsageService.logSuccess(fakeSupabase, {
       userId: "user-1",
       provider: "gemini",
-      model: "gemini-1.5-flash",
+      model: "gemini-3.5-flash-lite",
       activityType: "writing_feedback",
       usage: { promptTokens: 1_000_000, completionTokens: 1_000_000, totalTokens: 2_000_000 },
       latencyMs: 500,
@@ -81,7 +81,7 @@ describe("AIUsageService.logSuccess", () => {
 
     expect(aiUsageLogRepository.insert).toHaveBeenCalledWith(
       fakeSupabase,
-      expect.objectContaining({ status: "success", costUsd: 0.375, provider: "gemini" }),
+      expect.objectContaining({ status: "success", costUsd: 2.8, provider: "gemini" }),
     );
   });
 

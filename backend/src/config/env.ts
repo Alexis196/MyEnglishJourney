@@ -11,13 +11,20 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 
   GEMINI_API_KEY: z.string().min(1).optional(),
-  GEMINI_MODEL: z.string().default("gemini-1.5-flash"),
+  // gemini-1.5-* was fully retired (confirmed via a live models.list call on 2026-09-28) —
+  // gemini-3.5-flash-lite is the current cost-efficient default. See pricing.ts for the
+  // full verified pricing table if you want to switch to a different Gemini model.
+  GEMINI_MODEL: z.string().default("gemini-3.5-flash-lite"),
 
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 });
 
-const parsed = envSchema.safeParse(process.env);
+// Treat blank env vars (e.g. `SUPABASE_URL=` left empty in .env) as unset rather than
+// failing validation — this is the natural way people leave optional keys blank.
+const sanitizedEnv = Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== ""));
+
+const parsed = envSchema.safeParse(sanitizedEnv);
 
 if (!parsed.success) {
   console.error("Invalid environment configuration:", parsed.error.flatten().fieldErrors);

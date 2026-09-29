@@ -13,14 +13,31 @@ export interface PricingEntry {
  * budgeting — they are not fetched live and can go stale. Update this
  * table (not scattered literals in code) when prices change or new models
  * are added.
+ *
+ * Verified against https://ai.google.dev/gemini-api/docs/pricing and
+ * https://developers.openai.com/api/docs/pricing on 2026-09-28. The
+ * gemini-1.x family has since been fully retired (confirmed via a live
+ * models.list call) — do not reintroduce it as a default. The 3.6/3.7/3.8
+ * flash promotional prices below are only valid through Dec 31, 2026 per
+ * the pricing page; re-check after that date.
  */
 export const PRICING_TABLE: Record<AIProviderName, Record<string, PricingEntry>> = {
   gemini: {
-    "gemini-1.5-flash": { promptPer1M: 0.075, completionPer1M: 0.3 },
-    "gemini-1.5-pro": { promptPer1M: 1.25, completionPer1M: 5.0 },
+    "gemini-3.1-flash-lite": { promptPer1M: 0.25, completionPer1M: 1.5 },
+    "gemini-3.5-flash-lite": { promptPer1M: 0.3, completionPer1M: 2.5 },
+    "gemini-3.5-flash": { promptPer1M: 1.5, completionPer1M: 9.0 },
+    "gemini-3.6-flash": { promptPer1M: 0.75, completionPer1M: 3.75 },
+    "gemini-3.7-flash": { promptPer1M: 0.75, completionPer1M: 3.75 },
+    "gemini-3.8-flash": { promptPer1M: 0.75, completionPer1M: 3.75 },
+    // Pro pricing below is the <=200k-token tier; a higher tier applies past that (not modeled here).
+    "gemini-2.5-pro": { promptPer1M: 1.25, completionPer1M: 10.0 },
   },
   openai: {
+    "gpt-4.1-nano": { promptPer1M: 0.1, completionPer1M: 0.4 },
     "gpt-4o-mini": { promptPer1M: 0.15, completionPer1M: 0.6 },
+    "gpt-5-nano": { promptPer1M: 0.05, completionPer1M: 0.4 },
+    "gpt-5-mini": { promptPer1M: 0.25, completionPer1M: 2.0 },
+    "gpt-4.1-mini": { promptPer1M: 0.4, completionPer1M: 1.6 },
     "gpt-4o": { promptPer1M: 2.5, completionPer1M: 10.0 },
   },
 };

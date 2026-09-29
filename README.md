@@ -64,7 +64,7 @@ cp frontend/.env.example frontend/.env
 | `SUPABASE_ANON_KEY` | Sí, para auth/datos | Misma pantalla, clave `anon public`. |
 | `SUPABASE_SERVICE_ROLE_KEY` | No en Fase 1 | Reservada para tareas admin futuras. **Nunca** debe llegar al frontend. |
 | `GEMINI_API_KEY` | No (recomendada) | Generar en [Google AI Studio](https://aistudio.google.com/app/apikey). |
-| `GEMINI_MODEL` | No (default `gemini-1.5-flash`) | Verificar el nombre vigente en la documentación oficial antes de cambiarlo. |
+| `GEMINI_MODEL` | No (default `gemini-3.5-flash-lite`, verificado el 2026-09-28) | La familia `gemini-1.5-*` fue retirada; ver `backend/src/services/ai/pricing.ts` para otros modelos ya tarifados. |
 | `OPENAI_API_KEY` | No (recomendada como fallback) | Generar en [OpenAI Platform](https://platform.openai.com/api-keys). |
 | `OPENAI_MODEL` | No (default `gpt-4o-mini`) | Ídem, verificar contra la documentación oficial. |
 
