@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
+import { Logo } from "../ui/Logo";
 
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
@@ -12,9 +12,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-soft dark:border-zinc-800 dark:bg-surface-card-dark"
       >
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient text-white">
-            <GraduationCap className="h-5 w-5" />
-          </div>
+          <Logo className="h-11 w-11 rounded-xl" />
           <div>
             <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{title}</h1>
             <p className="mt-1 text-sm text-muted">{subtitle}</p>

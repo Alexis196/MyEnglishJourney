@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, GraduationCap, Mic } from "lucide-react";
+import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, Mic } from "lucide-react";
 import { cn } from "../../utils/cn";
+import { Logo } from "../ui/Logo";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -21,9 +22,7 @@ export function Sidebar() {
       className="hidden shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-4 dark:border-zinc-800 dark:bg-surface-card-dark md:flex"
     >
       <div className="mb-6 flex items-center gap-2 px-2">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gradient text-white">
-          <GraduationCap className="h-4.5 w-4.5" />
-        </div>
+        <Logo className="h-8 w-8" />
         {!collapsed && (
           <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             My English Journey
