@@ -1,0 +1,30 @@
+import { LogOut } from "lucide-react";
+import { useAuth } from "../../context/AuthProvider";
+import { ThemeToggle } from "./ThemeToggle";
+
+export function Topbar() {
+  const { user, signOut } = useAuth();
+  const displayName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "";
+
+  return (
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-surface-card-dark md:px-6">
+      <div className="text-sm text-muted">
+        {displayName && (
+          <span>
+            Hola, <span className="font-medium text-zinc-900 dark:text-zinc-100">{displayName}</span>
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        <ThemeToggle />
+        <button
+          onClick={() => signOut()}
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-muted hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <LogOut className="h-4 w-4" aria-hidden="true" />
+          Salir
+        </button>
+      </div>
+    </header>
+  );
+}

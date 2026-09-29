@@ -1,0 +1,26 @@
+{
+  "name": "my-english-journey",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Personal AI-powered English learning platform",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "npm run dev:shared:build && concurrently -k -n backend,frontend -c blue,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "dev:shared:build": "npm run build -w @myenglishjourney/shared",
+    "build": "npm run build -w @myenglishjourney/shared && npm run build -w backend && npm run build -w frontend",
+    "typecheck": "npm run typecheck -w @myenglishjourney/shared && npm run typecheck -w backend && npm run typecheck -w frontend",
+    "lint": "npm run lint -w backend && npm run lint -w frontend",
+    "test": "npm run test -w backend",
+    "migrate": "npx supabase db push"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
