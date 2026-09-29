@@ -8,6 +8,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "22"
       - key: CORS_ORIGIN
         value: https://my-english-journey-3aia.vercel.app
       # Secrets are intentionally not committed here — set these in the Render
