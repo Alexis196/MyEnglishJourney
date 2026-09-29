@@ -3,5 +3,6 @@
     "env": {
       "VITE_API_BASE_URL": "https://myenglishjourney-sxhe.onrender.com"
     }
-  }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
