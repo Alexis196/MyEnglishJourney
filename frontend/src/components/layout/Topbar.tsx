@@ -1,19 +1,28 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthProvider";
 import { ThemeToggle } from "./ThemeToggle";
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, signOut } = useAuth();
   const displayName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "";
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-surface-card-dark md:px-6">
-      <div className="text-sm text-muted">
-        {displayName && (
-          <span>
-            Hola, <span className="font-medium text-zinc-900 dark:text-zinc-100">{displayName}</span>
-          </span>
-        )}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="rounded-xl p-2 text-muted hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
+          aria-label="Abrir menú"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="text-sm text-muted">
+          {displayName && (
+            <span>
+              Hola, <span className="font-medium text-zinc-900 dark:text-zinc-100">{displayName}</span>
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <ThemeToggle />
