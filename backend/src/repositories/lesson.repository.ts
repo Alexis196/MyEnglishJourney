@@ -6,7 +6,31 @@ export interface LessonWithSections extends LessonRow {
   lesson_sections: Array<LessonSectionRow & { exercises: ExerciseRow[] }>;
 }
 
+export interface CreateLessonInput {
+  userId: string;
+  planDayId: string;
+  title: string;
+  objective: string;
+  cefrLevel: string;
+}
+
 export const lessonRepository = {
+  async create(supabase: SupabaseClient, input: CreateLessonInput): Promise<LessonRow> {
+    const { data, error } = await supabase
+      .from("lessons")
+      .insert({
+        user_id: input.userId,
+        plan_day_id: input.planDayId,
+        title: input.title,
+        objective: input.objective,
+        cefr_level: input.cefrLevel,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return data as LessonRow;
+  },
+
   async getByIdForUser(supabase: SupabaseClient, userId: string, lessonId: string): Promise<LessonWithSections> {
     const { data, error } = await supabase
       .from("lessons")

@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { Lock, CheckCircle2, PlayCircle, Coffee, ClipboardCheck, BookOpenCheck } from "lucide-react";
 import { useLearningPlan } from "../../hooks/useLearningPlan";
 import { CardSkeleton } from "../../components/ui/Skeleton";
-import { EmptyState } from "../../components/ui/EmptyState";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
+import { GeneratePlanForm } from "../../components/program/GeneratePlanForm";
 import { cn } from "../../utils/cn";
 import type { PlanDay } from "@myenglishjourney/shared";
 
@@ -57,11 +57,15 @@ export function ProgramOverviewPage() {
 
   if (!data?.plan) {
     return (
-      <EmptyState
-        icon={ClipboardCheck}
-        title="Todavía no hay un plan generado"
-        description="Tu plan de 90 días se genera a partir de una evaluación diagnóstica. Esta función está en desarrollo — por ahora podés explorar la estructura de la app."
-      />
+      <div className="flex flex-col gap-4">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Creá tu programa de 90 días</h1>
+          <p className="mt-1 text-sm text-muted">
+            Contanos tu nivel y objetivos, y la IA arma tu plan personalizado.
+          </p>
+        </div>
+        <GeneratePlanForm />
+      </div>
     );
   }
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CEFR_LEVELS } from "../constants/exerciseTypes.js";
+import { FOCUS_AREAS } from "../constants/focusAreas.js";
 
 export const planDayTypeSchema = z.enum(["lesson", "review", "rest", "assessment"]);
 export type PlanDayType = z.infer<typeof planDayTypeSchema>;
@@ -40,6 +41,15 @@ export const currentLearningPlanResponseSchema = z.object({
   days: z.array(planDaySchema),
 });
 export type CurrentLearningPlanResponse = z.infer<typeof currentLearningPlanResponseSchema>;
+
+export const generatePlanRequestSchema = z.object({
+  currentLevel: z.enum(CEFR_LEVELS),
+  targetLevel: z.enum(CEFR_LEVELS),
+  dailyMinutesGoal: z.number().int().min(10).max(240).default(60),
+  focusAreas: z.array(z.enum(FOCUS_AREAS)).min(1, "Elegí al menos un área de enfoque"),
+  motivation: z.string().trim().max(500).optional(),
+});
+export type GeneratePlanRequest = z.infer<typeof generatePlanRequestSchema>;
 
 export const learningGoalsSchema = z.object({
   id: z.string().uuid(),

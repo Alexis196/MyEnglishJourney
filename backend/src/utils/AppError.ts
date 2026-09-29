@@ -28,6 +28,12 @@ export class NotFoundError extends AppError {
   }
 }
 
+export class ConflictError extends AppError {
+  constructor(message: string, code: string) {
+    super(message, 409, code);
+  }
+}
+
 export class ServiceUnavailableError extends AppError {
   constructor(message: string, code: string) {
     super(message, 503, code);

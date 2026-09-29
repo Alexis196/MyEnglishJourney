@@ -1,4 +1,5 @@
 export * from "./constants/exerciseTypes.js";
+export * from "./constants/focusAreas.js";
 
 export * from "./schemas/auth.schema.js";
 export * from "./schemas/profile.schema.js";

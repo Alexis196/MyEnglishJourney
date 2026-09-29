@@ -12,3 +12,4 @@ export * from "./AIUsageService.js";
 export * from "./AIRouter.js";
 export * from "./pricing.js";
 export * from "./prompts/index.js";
+export * from "./planGeneration.schema.js";
