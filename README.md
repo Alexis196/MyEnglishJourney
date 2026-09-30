@@ -10,19 +10,21 @@ subconjunto de tipos de ejercicio) funcionando de punta a punta. Ver [Alcance de
 
 ## Stack
 
-- **Frontend**: React + TypeScript + Vite + Tailwind CSS + React Router + TanStack Query + React Hook Form + Zod + Framer Motion + Recharts + Lucide.
-- **Backend**: Node.js + Express + TypeScript, arquitectura por capas (routes → controllers → services → repositories).
-- **Base de datos**: Supabase (PostgreSQL + Auth + Row Level Security).
+- **App**: Next.js (App Router) + TypeScript + Tailwind CSS + TanStack Query + React Hook Form + Zod + Framer Motion + Recharts + Lucide. Un solo proyecto: la UI y la API (`src/app/api`, Route Handlers) se despliegan juntas en Vercel.
+- **API**: Route Handlers de Next con arquitectura por capas (route → services → repositories). `src/server/http/handler.ts` aplica disponibilidad de servicios → auth (cliente Supabase con RLS) → validación Zod → manejo de errores.
+- **Base de datos**: Supabase (PostgreSQL + Auth + Row Level Security + Storage).
 - **IA**: Google Gemini (principal) + OpenAI (fallback), con clasificación de errores, reintentos con backoff y control de presupuesto.
-- **Monorepo**: npm workspaces (`frontend/`, `backend/`, `packages/shared/`).
 
 ## Estructura del proyecto
 
 ```
 myEnglishJounary/
-├── frontend/                 # App React (Vite)
-├── backend/                  # API Express
-├── packages/shared/          # Esquemas Zod y tipos compartidos entre frontend y backend
+├── src/
+│   ├── app/                  # Rutas de Next (páginas) y API (src/app/api/**/route.ts)
+│   ├── views/                # Pantallas (client components) usadas por las rutas
+│   ├── components/ hooks/ context/ lib/ utils/   # UI y estado del cliente
+│   ├── server/               # Solo servidor: config, services, repositories, http helpers
+│   └── shared/               # Esquemas Zod y tipos compartidos (alias @myenglishjourney/shared)
 ├── supabase/
 │   ├── migrations/           # Migraciones SQL (schema + RLS), numeradas y ordenadas
 │   ├── seed.sql              # Datos de ejemplo opcionales para desarrollo local
@@ -33,58 +35,45 @@ myEnglishJounary/
 
 ## Requisitos previos
 
-- Node.js 20+ y npm 10+.
+- Node.js 22+ y npm 10+.
 - Una cuenta de [Supabase](https://supabase.com) (plan gratuito alcanza para desarrollo).
-- Una API key de [Google AI Studio](https://aistudio.google.com/app/apikey) (Gemini) y/o de [OpenAI](https://platform.openai.com/api-keys). Al menos una es necesaria para que los ejercicios de escritura libre se evalúen con IA; sin ninguna, el resto de la app funciona igual y esos ejercicios devuelven un estado "no se pudo evaluar" en vez de fallar.
+- Una API key de [Google AI Studio](https://aistudio.google.com/app/apikey) (Gemini) y/o de [OpenAI](https://platform.openai.com/api-keys). Sin ninguna, el resto de la app funciona igual y los ejercicios de escritura libre devuelven "no se pudo evaluar" en vez de fallar. El Speaking Lab requiere Gemini.
 
-## Instalación
+## Instalación y desarrollo
 
 ```bash
 npm install
+cp .env.example .env.local   # completar las variables
+npm run dev                  # http://localhost:3000
 ```
 
-Esto instala las dependencias de los tres workspaces (`frontend`, `backend`, `packages/shared`).
+Otros scripts: `npm run build`, `npm start`, `npm test`, `npm run typecheck`, `npm run lint`.
 
-## Configurar variables de entorno
-
-Copiá los archivos de ejemplo y completalos:
-
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-### Backend (`backend/.env`)
+## Variables de entorno (`.env.local`)
 
 | Variable | Requerida | Descripción |
 |---|---|---|
-| `PORT` | No (default 4000) | Puerto del servidor Express. |
-| `CORS_ORIGIN` | No (default `http://localhost:5173`) | Origen permitido por CORS (URL del frontend). |
-| `SUPABASE_URL` | Sí, para auth/datos | Project Settings → API en el dashboard de Supabase. |
-| `SUPABASE_ANON_KEY` | Sí, para auth/datos | Misma pantalla, clave `anon public`. |
-| `SUPABASE_SERVICE_ROLE_KEY` | No en Fase 1 | Reservada para tareas admin futuras. **Nunca** debe llegar al frontend. |
-| `GEMINI_API_KEY` | No (recomendada) | Generar en [Google AI Studio](https://aistudio.google.com/app/apikey). |
-| `GEMINI_MODEL` | No (default `gemini-3.5-flash-lite`, verificado el 2026-09-28) | La familia `gemini-1.5-*` fue retirada; ver `backend/src/services/ai/pricing.ts` para otros modelos ya tarifados. |
-| `OPENAI_API_KEY` | No (recomendada como fallback) | Generar en [OpenAI Platform](https://platform.openai.com/api-keys). |
-| `OPENAI_MODEL` | No (default `gpt-4o-mini`) | Ídem, verificar contra la documentación oficial. |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Sí | Project Settings → API. Usadas por las rutas de API. |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Sí | Mismos valores, expuestos al navegador (login y subida de audio). Nunca la `service_role`. |
+| `SUPABASE_SERVICE_ROLE_KEY` | No | Reservada para tareas admin futuras. **Nunca** debe llegar al navegador. |
+| `GEMINI_API_KEY` / `GEMINI_MODEL` | Recomendada | Default `gemini-3.5-flash-lite`; ver `src/server/services/ai/pricing.ts` para otros modelos tarifados. |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | Opcional (fallback) | Default `gpt-4o-mini`. |
 
-Sin `SUPABASE_URL`/`SUPABASE_ANON_KEY`, el backend arranca igual pero cualquier endpoint que
-necesite datos devuelve `503 { code: "supabase_not_configured" }` en vez de fallar de forma
-confusa. Sin ninguna key de IA, los ejercicios de `free_writing` se guardan con
-`evaluation_status: "error"` y un mensaje claro, sin romper el resto del flujo.
+Sin `SUPABASE_URL`/`SUPABASE_ANON_KEY`, los endpoints que necesitan datos devuelven
+`503 { code: "supabase_not_configured" }`. Sin keys de IA, `free_writing` se guarda con
+`evaluation_status: "error"` y un mensaje claro.
 
-### Frontend (`frontend/.env`)
+## Deploy (Vercel)
 
-| Variable | Requerida | Descripción |
-|---|---|---|
-| `VITE_SUPABASE_URL` | Sí, para login | Misma URL que el backend. |
-| `VITE_SUPABASE_ANON_KEY` | Sí, para login | La clave `anon public` (segura de exponer en el navegador). Nunca la `service_role`. |
-| `VITE_API_BASE_URL` | No (default `http://localhost:4000`) | URL del backend. |
+Importar el repo en Vercel (Framework Preset: Next.js) y cargar las variables de entorno de arriba.
+Las rutas de IA (`learning-plan/generate`, `speaking/sessions`, `exercises/.../attempts`) declaran `maxDuration`
+para dar margen a las llamadas a los LLM. Los audios de Speaking se suben directo desde el navegador al bucket
+privado `speaking-audio` de Supabase y la API solo recibe su ruta (evita el límite de body de las funciones serverless).
 
 ## Configurar Supabase
 
 1. Creá un proyecto en [supabase.com](https://supabase.com).
-2. Copiá `Project URL` y la clave `anon public` a `backend/.env` y `frontend/.env`.
+2. Copiá `Project URL` y la clave `anon public` a `.env.local`.
 3. Aplicá las migraciones (elegí una opción):
 
    **Opción A — Supabase CLI (recomendada):**
@@ -106,38 +95,16 @@ confusa. Sin ninguna key de IA, los ejercicios de `free_writing` se guardan con
 Ver [`docs/rls-verification.md`](docs/rls-verification.md) para el detalle de las políticas
 RLS de cada tabla y cómo verificarlas manualmente con dos usuarios reales.
 
-## Ejecutar en desarrollo
-
-```bash
-npm run dev
-```
-
-Esto compila `packages/shared` una vez y levanta backend (`http://localhost:4000`) y frontend
-(`http://localhost:5173`) en paralelo. Sin las variables de Supabase configuradas, el frontend
-igual carga pero muestra una pantalla de "Supabase no está configurado" al intentar entrar a
-una ruta protegida.
-
-## Scripts disponibles (raíz del monorepo)
-
-| Comando | Qué hace |
-|---|---|
-| `npm run dev` | Levanta backend + frontend en modo desarrollo. |
-| `npm run build` | Compila `packages/shared`, `backend` y `frontend` en ese orden. |
-| `npm run typecheck` | Corre `tsc --noEmit` en los tres workspaces. |
-| `npm run lint` | Corre el linter de `backend` (eslint) y `frontend` (oxlint). |
-| `npm run test` | Corre la suite de tests del backend (Vitest, proveedores de IA mockeados). |
-| `npm run migrate` | Atajo a `supabase db push` (requiere `supabase link` previo). |
-
 ## Pruebas realizadas
 
-- **Backend**: 38 tests con Vitest cubriendo:
-  - `requireAuth`: token ausente, inválido, válido, y errores inesperados del cliente de Supabase (con un cliente mockeado, sin pegarle a un proyecto real).
+- **Tests**: 39 tests con Vitest cubriendo:
+  - `authenticate`: token ausente, inválido, válido, y errores inesperados del cliente de Supabase (con un cliente mockeado, sin pegarle a un proyecto real).
   - Validadores de ejercicios cerrados (multiple choice, fill-in-blank, traducción): normalización de mayúsculas/espacios/puntuación.
   - `AIErrorClassifier`: clasificación de rate limit vs quota exceeded vs auth vs invalid request vs safety block, y qué categorías son reintentables/elegibles para fallback.
   - `AIRouter`: éxito directo, retry con backoff ante error reintentable, fallback de Gemini a OpenAI, no-fallback ante error terminal, agotamiento de ambos proveedores, bloqueo por presupuesto, y respeto de `provider_mode` (`auto`/`gemini_only`/`openai_only`).
   - `AIUsageService`: cálculo de costo contra la tabla de precios, bloqueo de presupuesto, y registro de éxitos/fallos.
-- **Build/typecheck**: `npm run build` y `npm run typecheck` verdes en los tres workspaces.
-- **Arranque real**: el backend compilado (`dist/server.js`) se probó sin ningún `.env` — `/api/health` responde `200` con las banderas de configuración en `false`, y un endpoint protegido como `/api/dashboard/summary` responde `503` con un mensaje claro en vez de un error genérico.
+- **Build/typecheck**: `npm run build`, `npm run typecheck` y `npm test` verdes tras la migración a Next.js.
+- **Arranque real**: tras migrar a Next.js, `next start` se probó sin ningún `.env` — `/api/health` responde `200` con las banderas de configuración en `false`, y un endpoint protegido como `/api/dashboard/summary` responde `503` con un mensaje claro en vez de un error genérico.
 - **Verificado contra un proyecto Supabase real** (además de los tests mockeados): las 18 migraciones se aplicaron sin errores; el trigger `handle_new_user` crea el `profiles` automáticamente al registrar un usuario; `/api/auth/me` y `/api/dashboard/summary` responden correctamente con un JWT real emitido por Supabase Auth; y se confirmó el aislamiento de RLS entre dos usuarios reales (el usuario B recibe `[]` al intentar leer el perfil del usuario A, y ve el suyo propio sin problema). La API key de Gemini también se validó contra `generativelanguage.googleapis.com`.
 - **Generación de plan verificada end-to-end**: se generó un plan de 90 días real (60 lección/12 repaso/12 descanso/6 evaluación) con Gemini, incluyendo la clase completa del día 1, y se enviaron respuestas reales a los 4 tipos de ejercicio implementados — incluyendo free writing con errores gramaticales deliberados, que la IA detectó y corrigió correctamente sin fingir que estaba perfecto.
 - **Speaking Lab verificado end-to-end**: se subió un audio a Supabase Storage (bucket privado `speaking-audio`, políticas RLS por carpeta de usuario), se envió a Gemini como audio inline, y se persistió el resultado. Con un tono sintético (sin habla real, ya que este entorno no tiene micrófono), la IA correctamente reportó que no detectó habla en vez de inventar una transcripción — confirma que el pipeline completo (audio → Storage → Gemini → persistencia) funciona; la calidad de transcripción con voz real queda para que la pruebes vos desde el navegador.
@@ -165,7 +132,6 @@ una ruta protegida.
 
 ## Despliegue
 
-No incluido en esta fase. Sugerencia para cuando corresponda: frontend en Vercel/Netlify
-(build estático de Vite), backend en Railway/Render/Fly.io (necesita un proceso Node
-persistente), y Supabase ya es un servicio administrado. Recordá configurar `CORS_ORIGIN` en
-el backend con el dominio real del frontend en producción.
+Ver la sección [Deploy (Vercel)](#deploy-vercel) más arriba. Supabase es un servicio administrado; en
+Authentication → URL Configuration agregá el dominio de Vercel como Site URL y `https://<dominio>/reset-password`
+como Redirect URL.

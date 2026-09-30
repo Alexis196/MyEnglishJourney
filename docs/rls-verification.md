@@ -12,10 +12,10 @@ with check (auth.uid() = user_id)
 This is simpler to audit than nested `EXISTS (...)` policies and cannot be bypassed by a
 forged `user_id` in a request body, because the backend never trusts a client-supplied
 `user_id` — it always derives it from the verified JWT (`req.user.id` set by
-`requireAuth`, see `backend/src/middlewares/requireAuth.ts`) and queries through a
-**request-scoped Supabase client** built with that JWT (`backend/src/lib/supabaseClient.ts`),
+`authenticate`, see `src/server/http/requireAuth.ts`) and queries through a
+**request-scoped Supabase client** built with that JWT (`src/server/lib/supabaseClient.ts`),
 so every query is subject to RLS as that specific user. The service-role key
-(`backend/src/config/supabaseAdmin.ts`) bypasses RLS entirely and is not used by any
+(`src/server/config/supabaseAdmin.ts`) bypasses RLS entirely and is not used by any
 Phase 1 data path.
 
 ## Table-by-table policy shape
