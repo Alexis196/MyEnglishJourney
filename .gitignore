@@ -15,3 +15,7 @@ Thumbs.db
 supabase/.branches/
 supabase/.temp/
 *.tsbuildinfo
+
+.next/
+next-env.d.ts
+.vercel

@@ -1,29 +1,45 @@
 {
   "name": "my-english-journey",
   "private": true,
-  "version": "0.1.0",
-  "description": "Personal AI-powered English learning platform",
-  "workspaces": [
-    "frontend",
-    "backend",
-    "packages/*"
-  ],
+  "version": "0.2.0",
+  "description": "Personal AI-powered English learning platform (Next.js)",
   "engines": {
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "npm run dev:shared:build && concurrently -k -n backend,frontend -c blue,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
-    "dev:shared:build": "npm run build -w @myenglishjourney/shared",
-    "build": "npm run build -w @myenglishjourney/shared && npm run build -w backend && npm run build -w frontend",
-    "build:backend": "npm run build -w @myenglishjourney/shared && npm run build -w backend",
-    "build:frontend": "npm run build -w @myenglishjourney/shared && npm run build -w frontend",
-    "start:backend": "npm run start -w backend",
-    "typecheck": "npm run typecheck -w @myenglishjourney/shared && npm run typecheck -w backend && npm run typecheck -w frontend",
-    "lint": "npm run lint -w backend && npm run lint -w frontend",
-    "test": "npm run test -w backend",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "migrate": "npx supabase db push"
   },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@hookform/resolvers": "^3.9.0",
+    "@supabase/supabase-js": "^2.45.4",
+    "@tanstack/react-query": "^5.59.0",
+    "framer-motion": "^11.11.1",
+    "lucide-react": "^0.451.0",
+    "next": "^16.3.8",
+    "openai": "^4.67.3",
+    "pino": "^9.4.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-hook-form": "^7.53.0",
+    "recharts": "^2.12.7",
+    "zod": "^3.23.8"
+  },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@types/node": "^22.7.4",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "autoprefixer": "^10.4.20",
+    "oxlint": "^1.81.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.2"
   }
 }
