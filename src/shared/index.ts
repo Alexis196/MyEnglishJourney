@@ -1,5 +1,6 @@
 export * from "./constants/exerciseTypes";
 export * from "./constants/focusAreas";
+export * from "./constants/personalization";
 
 export * from "./schemas/auth.schema";
 export * from "./schemas/profile.schema";

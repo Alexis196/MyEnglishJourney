@@ -7,6 +7,8 @@ export const FOCUS_AREAS = [
   "job_interviews",
   "coworker_communication",
   "everyday_conversation",
+  "travel",
+  "hobbies_interests",
 ] as const;
 
 export type FocusArea = (typeof FOCUS_AREAS)[number];
@@ -20,4 +22,6 @@ export const FOCUS_AREA_LABELS: Record<FocusArea, string> = {
   job_interviews: "Entrevistas laborales",
   coworker_communication: "Comunicación con compañeros",
   everyday_conversation: "Conversaciones cotidianas",
+  travel: "Viajes",
+  hobbies_interests: "Hobbies y temas de interés",
 };
