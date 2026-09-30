@@ -74,6 +74,10 @@ export const planGenerationService = {
       activityType: "plan_generation",
       systemPrompt: buildPlanGenerationSystemPrompt(profile.explanation_language),
       userPrompt: buildPlanGenerationUserPrompt({
+        occupation: input.occupation,
+        interests: input.interests,
+        otherInterests: input.otherInterests,
+        mainGoal: input.mainGoal,
         currentLevel: input.currentLevel,
         targetLevel: input.targetLevel,
         dailyMinutesGoal: input.dailyMinutesGoal,

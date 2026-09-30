@@ -1,13 +1,18 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useState } from "react";
+import { useForm, Controller, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ArrowLeft, ArrowRight } from "lucide-react";
 import {
   generatePlanRequestSchema,
   CEFR_LEVELS,
   FOCUS_AREAS,
   FOCUS_AREA_LABELS,
+  INTERESTS,
+  INTEREST_LABELS,
+  MAIN_GOALS,
+  MAIN_GOAL_LABELS,
   type GeneratePlanRequest,
 } from "@myenglishjourney/shared";
 import { Card } from "../ui/Card";
@@ -18,19 +23,79 @@ import { useToast } from "../../context/ToastProvider";
 import { cn } from "../../utils/cn";
 import { ApiError } from "../../lib/apiClient";
 
+const selectClasses =
+  "rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary";
+
+const STEPS: Array<{ title: string; subtitle: string; fields: FieldPath<GeneratePlanRequest>[] }> = [
+  {
+    title: "Sobre vos",
+    subtitle: "Así armamos ejemplos y vocabulario que realmente uses.",
+    fields: ["occupation", "interests", "otherInterests"],
+  },
+  {
+    title: "Tu nivel y tu meta",
+    subtitle: "Desde dónde partís y hasta dónde querés llegar en 90 días.",
+    fields: ["currentLevel", "targetLevel", "mainGoal", "motivation"],
+  },
+  {
+    title: "Tu rutina de estudio",
+    subtitle: "Cuánto tiempo tenés y qué situaciones querés practicar.",
+    fields: ["dailyMinutesGoal", "focusAreas"],
+  },
+];
+
+function ChipToggle({ checked, label, onToggle }: { checked: boolean; label: string; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={onToggle}
+      className={cn(
+        "rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        checked
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 export function GeneratePlanForm() {
   const generatePlan = useGeneratePlan();
   const { showToast } = useToast();
+  const [step, setStep] = useState(0);
 
   const {
     register,
     handleSubmit,
     control,
+    trigger,
     formState: { errors },
   } = useForm<GeneratePlanRequest>({
     resolver: zodResolver(generatePlanRequestSchema),
-    defaultValues: { currentLevel: "A2", targetLevel: "B1", dailyMinutesGoal: 60, focusAreas: [] },
+    defaultValues: {
+      occupation: "",
+      interests: [],
+      otherInterests: "",
+      mainGoal: "career",
+      currentLevel: "A2",
+      targetLevel: "B1",
+      dailyMinutesGoal: 60,
+      focusAreas: [],
+      motivation: "",
+    },
   });
+
+  const currentStep = STEPS[step] ?? STEPS[0]!;
+  const isLastStep = step === STEPS.length - 1;
+
+  const goNext = async () => {
+    const valid = await trigger(currentStep.fields);
+    if (valid) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
 
   const onSubmit = async (data: GeneratePlanRequest) => {
     try {
@@ -49,92 +114,217 @@ export function GeneratePlanForm() {
 
   return (
     <Card className="mx-auto max-w-2xl">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-1 flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary" />
         <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Generá tu plan de 90 días</h2>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nivel actual</label>
-            <select
-              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary"
-              {...register("currentLevel")}
-            >
-              {CEFR_LEVELS.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nivel objetivo</label>
-            <select
-              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary"
-              {...register("targetLevel")}
-            >
-              {CEFR_LEVELS.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <Input
-          label="Minutos de estudio por día"
-          type="number"
-          min={10}
-          max={240}
-          error={errors.dailyMinutesGoal?.message}
-          {...register("dailyMinutesGoal", { valueAsNumber: true })}
-        />
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Áreas de enfoque</label>
-          <Controller
-            control={control}
-            name="focusAreas"
-            render={({ field }) => (
-              <div className="grid grid-cols-2 gap-2">
-                {FOCUS_AREAS.map((area) => {
-                  const checked = field.value?.includes(area);
-                  return (
-                    <label
-                      key={area}
-                      className={cn(
-                        "flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm transition-colors",
-                        checked
-                          ? "border-primary bg-primary/5 dark:bg-primary/10"
-                          : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800",
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-primary"
-                        checked={checked}
-                        onChange={(e) => {
-                          const next = e.target.checked
-                            ? [...(field.value ?? []), area]
-                            : (field.value ?? []).filter((a) => a !== area);
-                          field.onChange(next);
-                        }}
-                      />
-                      <span className="text-zinc-800 dark:text-zinc-200">{FOCUS_AREA_LABELS[area]}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
+      <div className="mb-4 flex items-center gap-1.5" aria-label={`Paso ${step + 1} de ${STEPS.length}`}>
+        {STEPS.map((s, index) => (
+          <div
+            key={s.title}
+            className={cn("h-1.5 flex-1 rounded-full", index <= step ? "bg-brand-gradient" : "bg-zinc-200 dark:bg-zinc-800")}
           />
-          {errors.focusAreas && <p className="text-sm text-red-500">{errors.focusAreas.message}</p>}
-        </div>
+        ))}
+      </div>
+      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        {step + 1}. {currentStep.title}
+      </p>
+      <p className="mb-4 text-sm text-muted">{currentStep.subtitle}</p>
 
-        <Button type="submit" isLoading={generatePlan.isPending} className="w-fit">
-          {generatePlan.isPending ? "Generando tu plan (puede tardar unos segundos)..." : "Generar mi plan"}
-        </Button>
+      <form
+        onSubmit={(event) => {
+          // Enter on an early step moves forward instead of submitting an unfinished form.
+          if (!isLastStep) {
+            event.preventDefault();
+            void goNext();
+            return;
+          }
+          void handleSubmit(onSubmit)(event);
+        }}
+        className="flex flex-col gap-4"
+        noValidate
+      >
+        {step === 0 && (
+          <>
+            <Input
+              label="¿A qué te dedicás?"
+              placeholder="Ej: desarrollador frontend, diseñadora, estudiante de medicina…"
+              error={errors.occupation?.message}
+              {...register("occupation")}
+            />
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                ¿Qué cosas te gustan? <span className="font-normal text-muted">(elegí las que quieras)</span>
+              </span>
+              <Controller
+                control={control}
+                name="interests"
+                render={({ field }) => (
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Intereses">
+                    {INTERESTS.map((interest) => (
+                      <ChipToggle
+                        key={interest}
+                        label={INTEREST_LABELS[interest]}
+                        checked={field.value.includes(interest)}
+                        onToggle={() =>
+                          field.onChange(
+                            field.value.includes(interest)
+                              ? field.value.filter((i) => i !== interest)
+                              : [...field.value, interest],
+                          )
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              />
+            </div>
+
+            <Input
+              label="¿Algo más que te apasione? (opcional)"
+              placeholder="Ej: ajedrez, anime, jardinería, Fórmula 1…"
+              error={errors.otherInterests?.message}
+              {...register("otherInterests")}
+            />
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="currentLevel" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Nivel actual
+                </label>
+                <select id="currentLevel" className={selectClasses} {...register("currentLevel")}>
+                  {CEFR_LEVELS.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="targetLevel" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Nivel al que querés llegar
+                </label>
+                <select id="targetLevel" className={selectClasses} {...register("targetLevel")}>
+                  {CEFR_LEVELS.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
+                {errors.targetLevel && <p className="text-sm text-red-500">{errors.targetLevel.message}</p>}
+              </div>
+            </div>
+            <p className="-mt-2 text-xs text-muted">
+              ¿No sabés tu nivel? A1 = principiante, A2 = básico, B1 = intermedio, B2 = intermedio alto, C1/C2 = avanzado.
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="mainGoal" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                ¿Para qué querés mejorar tu inglés?
+              </label>
+              <select id="mainGoal" className={selectClasses} {...register("mainGoal")}>
+                {MAIN_GOALS.map((goal) => (
+                  <option key={goal} value={goal}>
+                    {MAIN_GOAL_LABELS[goal]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="motivation" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Contanos más (opcional)
+              </label>
+              <textarea
+                id="motivation"
+                rows={3}
+                maxLength={500}
+                placeholder="Ej: tengo entrevistas en unos meses y me cuesta hablar con fluidez."
+                className={cn(selectClasses, "resize-none placeholder:text-muted")}
+                {...register("motivation")}
+              />
+              {errors.motivation && <p className="text-sm text-red-500">{errors.motivation.message}</p>}
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <Input
+              label="Minutos de estudio por día"
+              type="number"
+              min={10}
+              max={240}
+              error={errors.dailyMinutesGoal?.message}
+              {...register("dailyMinutesGoal", { valueAsNumber: true })}
+            />
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Áreas de enfoque</span>
+              <Controller
+                control={control}
+                name="focusAreas"
+                render={({ field }) => (
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {FOCUS_AREAS.map((area) => {
+                      const checked = field.value?.includes(area);
+                      return (
+                        <label
+                          key={area}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm transition-colors",
+                            checked
+                              ? "border-primary bg-primary/5 dark:bg-primary/10"
+                              : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800",
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-primary"
+                            checked={checked}
+                            onChange={(e) => {
+                              const next = e.target.checked
+                                ? [...(field.value ?? []), area]
+                                : (field.value ?? []).filter((a) => a !== area);
+                              field.onChange(next);
+                            }}
+                          />
+                          <span className="text-zinc-800 dark:text-zinc-200">{FOCUS_AREA_LABELS[area]}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              />
+              {errors.focusAreas && <p className="text-sm text-red-500">{errors.focusAreas.message}</p>}
+            </div>
+          </>
+        )}
+
+        <div className="flex items-center justify-between gap-3 pt-2">
+          {step > 0 ? (
+            <Button type="button" variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={generatePlan.isPending}>
+              <ArrowLeft className="h-4 w-4" /> Atrás
+            </Button>
+          ) : (
+            <span />
+          )}
+
+          {isLastStep ? (
+            <Button type="submit" isLoading={generatePlan.isPending}>
+              {generatePlan.isPending ? "Armando tu plan personalizado (puede tardar un poco)..." : "Generar mi plan"}
+            </Button>
+          ) : (
+            <Button type="button" onClick={() => void goNext()}>
+              Siguiente <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </form>
     </Card>
   );

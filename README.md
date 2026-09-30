@@ -97,7 +97,7 @@ RLS de cada tabla y cómo verificarlas manualmente con dos usuarios reales.
 
 ## Pruebas realizadas
 
-- **Tests**: 39 tests con Vitest cubriendo:
+- **Tests**: 43 tests con Vitest cubriendo:
   - `authenticate`: token ausente, inválido, válido, y errores inesperados del cliente de Supabase (con un cliente mockeado, sin pegarle a un proyecto real).
   - Validadores de ejercicios cerrados (multiple choice, fill-in-blank, traducción): normalización de mayúsculas/espacios/puntuación.
   - `AIErrorClassifier`: clasificación de rate limit vs quota exceeded vs auth vs invalid request vs safety block, y qué categorías son reintentables/elegibles para fallback.
