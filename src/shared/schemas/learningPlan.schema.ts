@@ -43,6 +43,21 @@ export const currentLearningPlanResponseSchema = z.object({
 });
 export type CurrentLearningPlanResponse = z.infer<typeof currentLearningPlanResponseSchema>;
 
+export const learningPlanSummarySchema = learningPlanSchema.extend({
+  isCurrent: z.boolean(),
+  completedDays: z.number().int().min(0),
+  createdAt: z.string(),
+});
+export type LearningPlanSummary = z.infer<typeof learningPlanSummarySchema>;
+
+export const learningPlanListResponseSchema = z.object({
+  plans: z.array(learningPlanSummarySchema),
+});
+export type LearningPlanListResponse = z.infer<typeof learningPlanListResponseSchema>;
+
+/** Max simultaneous non-archived plans per user (each one costs an AI generation). */
+export const MAX_OPEN_PLANS = 5;
+
 const CEFR_ORDER = new Map(CEFR_LEVELS.map((level, index) => [level, index]));
 
 export const generatePlanRequestSchema = z

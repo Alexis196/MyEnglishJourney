@@ -63,7 +63,14 @@ function ChipToggle({ checked, label, onToggle }: { checked: boolean; label: str
   );
 }
 
-export function GeneratePlanForm() {
+interface GeneratePlanFormProps {
+  /** Called after the new plan was created (e.g. to close the form). */
+  onCreated?: () => void;
+  /** When set, step 1 shows a cancel button to go back to the plan list. */
+  onCancel?: () => void;
+}
+
+export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps) {
   const generatePlan = useGeneratePlan();
   const { showToast } = useToast();
   const [step, setStep] = useState(0);
@@ -101,6 +108,7 @@ export function GeneratePlanForm() {
     try {
       await generatePlan.mutateAsync(data);
       showToast("¡Tu plan de 90 días está listo!", "success");
+      onCreated?.();
     } catch (err) {
       const message =
         err instanceof ApiError && err.status === 429
@@ -310,6 +318,10 @@ export function GeneratePlanForm() {
           {step > 0 ? (
             <Button type="button" variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={generatePlan.isPending}>
               <ArrowLeft className="h-4 w-4" /> Atrás
+            </Button>
+          ) : onCancel ? (
+            <Button type="button" variant="ghost" onClick={onCancel} disabled={generatePlan.isPending}>
+              Cancelar
             </Button>
           ) : (
             <span />

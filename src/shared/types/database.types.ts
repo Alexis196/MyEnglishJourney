@@ -31,6 +31,7 @@ export interface LearningPlanRow {
   target_level_start: string | null;
   target_level_end: string | null;
   generated_by: "ai" | "manual" | "template";
+  created_at: string;
   updated_at: string;
 }
 
