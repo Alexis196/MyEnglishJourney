@@ -44,6 +44,23 @@ export const planDayRepository = {
     return (data ?? []) as PlanDayRow[];
   },
 
+  /** Number of completed days per plan, for the plan picker. */
+  async countCompletedByPlan(supabase: SupabaseClient, learningPlanIds: string[]): Promise<Map<string, number>> {
+    const counts = new Map<string, number>();
+    if (learningPlanIds.length === 0) return counts;
+    const { data, error } = await supabase
+      .from("plan_days")
+      .select("learning_plan_id")
+      .in("learning_plan_id", learningPlanIds)
+      .eq("status", "completed");
+    if (error) throw error;
+    for (const row of data ?? []) {
+      const id = row.learning_plan_id as string;
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    return counts;
+  },
+
   async getNextAvailable(supabase: SupabaseClient, learningPlanId: string): Promise<PlanDayRow | null> {
     const { data, error } = await supabase
       .from("plan_days")

@@ -8,7 +8,7 @@ export interface UpdateProfileFields {
   explanation_language?: "es" | "en";
   theme_preference?: "light" | "dark" | "system";
   timezone?: string;
-  current_plan_id?: string;
+  current_plan_id?: string | null;
 }
 
 export const profileRepository = {

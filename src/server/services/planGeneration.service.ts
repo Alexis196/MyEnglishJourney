@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { GeneratePlanRequest, CurrentLearningPlanResponse } from "@myenglishjourney/shared";
+import { MAX_OPEN_PLANS, type GeneratePlanRequest, type CurrentLearningPlanResponse } from "@myenglishjourney/shared";
 import { ConflictError } from "../utils/AppError";
 import { profileRepository } from "../repositories/profile.repository";
 import { learningPlanRepository } from "../repositories/learningPlan.repository";
@@ -63,9 +63,12 @@ function toDbExercise(ai: AIExercise, orderIndex: number): ExerciseInsertFields 
 
 export const planGenerationService = {
   async generate(supabase: SupabaseClient, userId: string, input: GeneratePlanRequest): Promise<CurrentLearningPlanResponse> {
-    const existingPlan = await learningPlanRepository.getActiveForUser(supabase, userId);
-    if (existingPlan) {
-      throw new ConflictError("Ya tenés un plan activo. Todavía no se soporta regenerar/archivar uno existente.", "plan_already_exists");
+    const openPlans = await learningPlanRepository.countOpenForUser(supabase, userId);
+    if (openPlans >= MAX_OPEN_PLANS) {
+      throw new ConflictError(
+        `Llegaste al máximo de ${MAX_OPEN_PLANS} planes activos. Archivá alguno para crear otro.`,
+        "plan_limit_reached",
+      );
     }
 
     const profile = await profileRepository.getById(supabase, userId);

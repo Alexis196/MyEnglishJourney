@@ -10,7 +10,7 @@ export function useGeneratePlan() {
     mutationFn: (input: GeneratePlanRequest) =>
       apiClient.post<CurrentLearningPlanResponse>("/api/learning-plan/generate", input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["learning-plan", "current"] });
+      queryClient.invalidateQueries({ queryKey: ["learning-plan"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
     },

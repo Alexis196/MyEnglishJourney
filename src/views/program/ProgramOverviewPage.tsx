@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { Lock, CheckCircle2, PlayCircle, Coffee, ClipboardCheck, BookOpenCheck } from "lucide-react";
+import { useState } from "react";
 import { useLearningPlan } from "../../hooks/useLearningPlan";
+import { useLearningPlans } from "../../hooks/useLearningPlans";
 import { CardSkeleton } from "../../components/ui/Skeleton";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { GeneratePlanForm } from "../../components/program/GeneratePlanForm";
+import { PlanSwitcher } from "../../components/program/PlanSwitcher";
 import { cn } from "../../utils/cn";
 import type { PlanDay } from "@myenglishjourney/shared";
 
@@ -48,11 +51,27 @@ function DayCell({ day }: { day: PlanDay }) {
 
 export function ProgramOverviewPage() {
   const { data, isLoading } = useLearningPlan();
+  const { data: plansData } = useLearningPlans();
+  const [creating, setCreating] = useState(false);
 
   if (isLoading) {
     return (
       <div className="space-y-4">
         <CardSkeleton />
+      </div>
+    );
+  }
+
+  if (creating && data?.plan) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Nuevo plan de 90 días</h1>
+          <p className="mt-1 text-sm text-muted">
+            Tus otros planes se conservan; podés cambiar entre ellos cuando quieras.
+          </p>
+        </div>
+        <GeneratePlanForm onCreated={() => setCreating(false)} onCancel={() => setCreating(false)} />
       </div>
     );
   }
@@ -82,6 +101,10 @@ export function ProgramOverviewPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {plansData && plansData.plans.length > 0 && (
+        <PlanSwitcher plans={plansData.plans} onCreateNew={() => setCreating(true)} />
+      )}
+
       <div>
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">{data.plan.title}</h1>
         <p className="text-sm text-muted">

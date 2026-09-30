@@ -11,7 +11,7 @@ function isoDateOnly(date: Date): string {
 export const dashboardService = {
   async getSummary(supabase: SupabaseClient, userId: string): Promise<DashboardSummary> {
     const profile = await profileRepository.getById(supabase, userId);
-    const plan = await learningPlanRepository.getActiveForUser(supabase, userId);
+    const plan = await learningPlanRepository.getCurrentForUser(supabase, userId, profile.current_plan_id);
 
     const emptySummary: DashboardSummary = {
       hasActivePlan: false,
