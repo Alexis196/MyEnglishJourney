@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Lock, CheckCircle2, PlayCircle, Coffee, ClipboardCheck, BookOpenCheck } from "lucide-react";
 import { useState } from "react";
 import { useLearningPlan } from "../../hooks/useLearningPlan";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLearningPlans } from "../../hooks/useLearningPlans";
+import { lessonQuery } from "../../lib/queries";
 import { CardSkeleton } from "../../components/ui/Skeleton";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -24,6 +26,11 @@ const dayTypeIcon: Record<PlanDay["dayType"], typeof PlayCircle> = {
 function DayCell({ day }: { day: PlanDay }) {
   const Icon = day.status === "completed" ? CheckCircle2 : day.status === "locked" ? Lock : dayTypeIcon[day.dayType];
   const isInteractive = day.status !== "locked" && day.lessonId;
+  const queryClient = useQueryClient();
+  // Start loading the lesson as soon as the student points at / focuses the day.
+  const warmLesson = () => {
+    if (day.lessonId) void queryClient.prefetchQuery(lessonQuery(day.lessonId));
+  };
 
   const content = (
     <div
@@ -44,7 +51,11 @@ function DayCell({ day }: { day: PlanDay }) {
   if (!isInteractive) return content;
 
   return (
-    <Link href={`/program/lessons/${day.lessonId}`} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+    <Link
+      href={`/program/lessons/${day.lessonId}`}
+      onMouseEnter={warmLesson}
+      onFocus={warmLesson}
+      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
       {content}
     </Link>
   );

@@ -1,13 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { LessonDetail, UpdateLessonProgressInput } from "@myenglishjourney/shared";
+import type { UpdateLessonProgressInput } from "@myenglishjourney/shared";
 import { apiClient } from "../lib/apiClient";
+import { lessonQuery } from "../lib/queries";
 
 export function useLesson(lessonId: string | undefined) {
   return useQuery({
-    queryKey: ["lesson", lessonId],
-    queryFn: () => apiClient.get<LessonDetail>(`/api/lessons/${lessonId}`),
+    // Placeholder id is never fetched: `enabled` keeps the query idle until the id is known.
+    ...lessonQuery(lessonId ?? ""),
     enabled: Boolean(lessonId),
   });
 }
