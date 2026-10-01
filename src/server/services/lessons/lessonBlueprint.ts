@@ -65,6 +65,7 @@ export interface LessonSpec {
 const RECOGNITION: ExerciseType[] = ["multiple_choice", "fill_in_blank", "translation_es_en", "translation_en_es"];
 const ALLOWED_SECTIONS = ["review", "vocabulary", "grammar", "interactive", "final_assessment"];
 const BUILDING: ExerciseType[] = ["word_ordering", "grammar_error_correction"];
+const MIN_ASSESSMENT = 3;
 
 /** Largest-remainder split of `total` by `weights`, giving every share at least `minEach`. */
 function allocate(weights: number[], total: number, minEach: number): number[] {
@@ -159,6 +160,16 @@ export function buildLessonSpec(params: { minutes: number; level: CefrLevel; day
   } else {
     const split = allocate(practiceKeys.map((k) => weights[k]), practiceCount, 2);
     practiceKeys.forEach((k, i) => counts.set(k, split[i]!));
+  }
+
+  // The final assessment never shrinks below 3 items, even when long writing tasks leave little practice time:
+  // the extra items come from the largest other section, or are simply added when every section is already small.
+  while (counts.get("assessment")! < MIN_ASSESSMENT) {
+    const donor = [...counts.entries()]
+      .filter(([key, count]) => key !== "assessment" && count > 2)
+      .sort((a, b) => b[1] - a[1])[0];
+    if (donor) counts.set(donor[0], donor[1] - 1);
+    counts.set("assessment", counts.get("assessment")! + 1);
   }
 
   const plans: Record<SectionKey, () => SectionPlan> = {

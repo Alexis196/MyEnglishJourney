@@ -223,3 +223,17 @@ describe("personal context", () => {
     expect(allowsWorkContext({ preferredTopics: [], profession: undefined, learningGoal: "job_search" })).toBe(true);
   });
 });
+
+describe("final assessment size", () => {
+  it("always has at least 3 items, whatever the level, minutes or day type", () => {
+    for (const level of CEFR_LEVELS) {
+      for (const minutes of [30, 45, 60, 90]) {
+        for (const dayType of ["lesson", "review", "assessment"] as const) {
+          const spec = buildLessonSpec({ minutes, level, dayType });
+          const assessment = spec.blueprint.find((section) => section.key === "assessment")!;
+          expect(assessment.count, `${level} ${minutes} ${dayType}`).toBeGreaterThanOrEqual(3);
+        }
+      }
+    }
+  });
+});
