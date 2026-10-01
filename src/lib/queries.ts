@@ -23,7 +23,8 @@ export const currentPlanQuery = queryOptions({
 });
 
 export const planListQuery = queryOptions({
-  queryKey: ["learning-plan", "list"],
+  // "all": the list now includes archived plans; a new key drops any list persisted with the old shape.
+  queryKey: ["learning-plan", "list", "all"],
   queryFn: () => apiClient.get<LearningPlanListResponse>("/api/learning-plan"),
   staleTime: STALE.plans,
 });

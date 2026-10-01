@@ -36,3 +36,20 @@ export function useArchivePlan() {
     onSuccess: invalidate,
   });
 }
+
+export function useUnarchivePlan() {
+  const invalidate = useInvalidatePlanQueries();
+  return useMutation({
+    mutationFn: (planId: string) =>
+      apiClient.post<CurrentLearningPlanResponse>(`/api/learning-plan/${planId}/unarchive`),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeletePlan() {
+  const invalidate = useInvalidatePlanQueries();
+  return useMutation({
+    mutationFn: (planId: string) => apiClient.delete<CurrentLearningPlanResponse>(`/api/learning-plan/${planId}`),
+    onSuccess: invalidate,
+  });
+}

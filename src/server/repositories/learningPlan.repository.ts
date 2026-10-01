@@ -31,6 +31,12 @@ export const learningPlanRepository = {
     return (data as LearningPlanRow | null) ?? null;
   },
 
+  /** Deleting a plan cascades to its days and lessons; profiles.current_plan_id falls back to null. */
+  async delete(supabase: SupabaseClient, planId: string): Promise<void> {
+    const { error } = await supabase.from("learning_plans").delete().eq("id", planId);
+    if (error) throw error;
+  },
+
   /** The user's plans, newest first (RLS already limits rows to the caller). */
   async listForUser(supabase: SupabaseClient, userId: string, includeArchived = false): Promise<LearningPlanRow[]> {
     let query = supabase.from("learning_plans").select("*").eq("user_id", userId);
