@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, Mic, X } from "lucide-react";
+import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, LogOut, Mic, X } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { Logo } from "../ui/Logo";
+import { useAuth } from "../../context/AuthProvider";
 import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
@@ -72,6 +73,31 @@ function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: 
   );
 }
 
+/** "Salir" lives in the nav (same look as the menu items) so the topbar stays uncluttered on small screens. */
+function SignOutButton({ collapsed, onDone }: { collapsed: boolean; onDone?: () => void }) {
+  const { signOut } = useAuth();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onDone?.();
+        void signOut();
+      }}
+      title={collapsed ? "Salir" : undefined}
+      aria-label={collapsed ? "Salir" : undefined}
+      className={cn(
+        "group flex w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium text-[var(--nav-text)] transition-colors",
+        "hover:bg-[var(--nav-hover-bg)] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        collapsed && "justify-center px-0",
+      )}
+    >
+      <LogOut className="h-[18px] w-[18px] shrink-0 text-[var(--nav-icon)] group-hover:text-ink" aria-hidden="true" />
+      {!collapsed && <span className="truncate">Salir</span>}
+    </button>
+  );
+}
+
 export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; onMobileClose: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -92,6 +118,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
 
         <div className="relative z-10 flex-1">
           <NavLinks collapsed={collapsed} />
+          {/* Kept with the menu (not at the bottom) so it never sits on top of the skyline illustration. */}
+          <div className="mt-3 border-t border-[var(--sidebar-border)] pt-3">
+            <SignOutButton collapsed={collapsed} />
+          </div>
         </div>
 
         <div className="relative z-10 mb-2 flex justify-center">
@@ -145,7 +175,8 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
 
               <div className="relative z-10 flex flex-1 flex-col gap-4">
                 <NavLinks collapsed={false} onNavigate={onMobileClose} />
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <SignOutButton collapsed={false} onDone={onMobileClose} />
                   <ThemeToggle />
                 </div>
               </div>
