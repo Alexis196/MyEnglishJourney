@@ -95,18 +95,11 @@ export function ConfirmDialog({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="relative isolate w-full max-w-sm overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0A0D14] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8),0_0_40px_-10px_rgba(84,84,247,0.35)]"
+            className="relative isolate w-full max-w-sm overflow-hidden rounded-3xl border border-line bg-card shadow-featured"
           >
             {/* Decorative skyline: bottom strip only, faded into the card above it. */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/sidebar-london.webp"
-                alt=""
-                decoding="async"
-                className="absolute inset-x-0 bottom-0 h-36 w-full object-cover object-[28%_80%] [mask-image:linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.7)_35%,black_70%)]"
-              />
-              <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#0A0D14]/40 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-36 bg-[image:var(--art-sidebar)] bg-cover bg-no-repeat bg-[position:28%_80%] [mask-image:linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.7)_35%,black_70%)]" />
             </div>
 
             <div className="flex flex-col items-center gap-3 px-6 pb-36 pt-7 text-center">
@@ -116,7 +109,7 @@ export function ConfirmDialog({
               <h2 id={titleId} className="text-lg font-semibold text-ink">
                 {title}
               </h2>
-              <p id={descriptionId} className="text-sm leading-relaxed text-[#B4BACB]">
+              <p id={descriptionId} className="text-sm leading-relaxed text-muted">
                 {description}
               </p>
 
@@ -126,7 +119,7 @@ export function ConfirmDialog({
                   variant="outline"
                   onClick={onCancel}
                   disabled={isLoading}
-                  className="flex-1 bg-white/[0.04] backdrop-blur-sm"
+                  className="flex-1 backdrop-blur-sm"
                 >
                   {cancelLabel}
                 </Button>

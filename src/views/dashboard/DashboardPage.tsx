@@ -61,7 +61,7 @@ export function DashboardPage() {
         <HeroCard summary={summary} />
       </motion.div>
 
-      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={Flame} label="Racha actual" value={`${summary.currentStreak} días`} />
         <StatCard icon={Clock} label="Tiempo estudiado" value={formatMinutes(summary.totalMinutesStudied)} tone="secondary" />
         <StatCard icon={Sparkles} label="Palabras aprendidas" value={String(summary.wordsLearnedCount)} />

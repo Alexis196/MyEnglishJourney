@@ -16,7 +16,7 @@ export function TranslationExercise({ exercise, value, onChange, disabled }: Pro
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs font-medium uppercase tracking-wide text-secondary">{direction}</p>
-      <p className="text-base font-medium text-zinc-900 dark:text-ink">{exercise.content.sourceText}</p>
+      <p className="text-base font-medium text-ink">{exercise.content.sourceText}</p>
       <Input
         placeholder="Escribí la traducción"
         value={value}

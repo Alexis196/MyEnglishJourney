@@ -159,7 +159,7 @@ function WaveformBars({ active }: { active: boolean }) {
           style={{ height: `${height}%`, animationDelay: `${(index % 8) * 90}ms` }}
           className={cn(
             "w-[3px] origin-center rounded-full transition-colors",
-            active ? "bg-primary motion-safe:animate-wave-bar" : "bg-white/15",
+            active ? "bg-primary motion-safe:animate-wave-bar" : "bg-ink/15",
           )}
         />
       ))}

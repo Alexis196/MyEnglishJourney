@@ -24,7 +24,7 @@ import { cn } from "../../utils/cn";
 import { ApiError } from "../../lib/apiClient";
 
 const selectClasses =
-  "rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-surface-raised-dark dark:text-ink focus:outline-none focus:ring-2 focus:ring-primary";
+  "rounded-xl border border-line-strong bg-soft px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary";
 
 const STEPS: Array<{ title: string; subtitle: string; fields: FieldPath<GeneratePlanRequest>[] }> = [
   {
@@ -55,7 +55,7 @@ function ChipToggle({ checked, label, onToggle }: { checked: boolean; label: str
         "rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         checked
           ? "border-primary bg-primary/10 text-primary"
-          : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.06]",
+          : "border-line text-ink-2 hover:bg-hover",
       )}
     >
       {label}
@@ -124,17 +124,17 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
     <Card className="mx-auto max-w-2xl">
       <div className="mb-1 flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-ink">Generá tu plan de 90 días</h2>
+        <h2 className="text-base font-semibold text-ink">Generá tu plan de 90 días</h2>
       </div>
       <div className="mb-4 flex items-center gap-1.5" aria-label={`Paso ${step + 1} de ${STEPS.length}`}>
         {STEPS.map((s, index) => (
           <div
             key={s.title}
-            className={cn("h-1.5 flex-1 rounded-full", index <= step ? "bg-brand-gradient" : "bg-zinc-200 dark:bg-white/[0.06]")}
+            className={cn("h-1.5 flex-1 rounded-full", index <= step ? "bg-brand-gradient" : "bg-track")}
           />
         ))}
       </div>
-      <p className="text-sm font-medium text-zinc-900 dark:text-ink">
+      <p className="text-sm font-medium text-ink">
         {step + 1}. {currentStep.title}
       </p>
       <p className="mb-4 text-sm text-muted">{currentStep.subtitle}</p>
@@ -162,7 +162,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
             />
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="text-sm font-medium text-ink-2">
                 ¿Qué cosas te gustan? <span className="font-normal text-muted">(elegí las que quieras)</span>
               </span>
               <Controller
@@ -202,7 +202,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
           <>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="currentLevel" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor="currentLevel" className="text-sm font-medium text-ink-2">
                   Nivel actual
                 </label>
                 <select id="currentLevel" className={selectClasses} {...register("currentLevel")}>
@@ -214,7 +214,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="targetLevel" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor="targetLevel" className="text-sm font-medium text-ink-2">
                   Nivel al que querés llegar
                 </label>
                 <select id="targetLevel" className={selectClasses} {...register("targetLevel")}>
@@ -232,7 +232,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
             </p>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="mainGoal" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor="mainGoal" className="text-sm font-medium text-ink-2">
                 ¿Para qué querés mejorar tu inglés?
               </label>
               <select id="mainGoal" className={selectClasses} {...register("mainGoal")}>
@@ -245,7 +245,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="motivation" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor="motivation" className="text-sm font-medium text-ink-2">
                 Contanos más (opcional)
               </label>
               <textarea
@@ -273,7 +273,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
             />
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Áreas de enfoque</span>
+              <span className="text-sm font-medium text-ink-2">Áreas de enfoque</span>
               <Controller
                 control={control}
                 name="focusAreas"
@@ -288,7 +288,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
                             "flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm transition-colors",
                             checked
                               ? "border-primary bg-primary/5 dark:bg-primary/10"
-                              : "border-zinc-200 hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.06]",
+                              : "border-line hover:bg-hover",
                           )}
                         >
                           <input
@@ -302,7 +302,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
                               field.onChange(next);
                             }}
                           />
-                          <span className="text-zinc-800 dark:text-zinc-200">{FOCUS_AREA_LABELS[area]}</span>
+                          <span className="text-ink-2">{FOCUS_AREA_LABELS[area]}</span>
                         </label>
                       );
                     })}

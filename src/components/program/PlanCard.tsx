@@ -19,8 +19,8 @@ export function PlanCard({ title, startLevel, endLevel, totalDays, completedDays
 
   return (
     <ArtworkCard
-      image="/images/plan-mountain.webp"
-      imagePositionClassName="object-[80%_50%] @xl:object-right"
+      art="plan"
+      artPositionClassName="bg-[position:80%_50%] @xl:bg-right"
       contentClassName="@xl:max-w-[54%] @xl:py-8"
       scrim="strong"
     >
@@ -35,18 +35,18 @@ export function PlanCard({ title, startLevel, endLevel, totalDays, completedDays
               <Badge tone="brand">
                 {startLevel ?? "?"} → {endLevel ?? "?"}
               </Badge>
-              <span className="text-xs text-[#9299AA]">{totalDays} días</span>
+              <span className="text-xs text-muted">{totalDays} días</span>
             </div>
           </div>
         </div>
 
         <div>
           <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-            <span className="text-[#9299AA]">
+            <span className="text-muted">
               {completedDays} de {totalDays} días completados
             </span>
             <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-ink">
-              <Flag className="h-3.5 w-3.5 text-[#A78BFA]" aria-hidden="true" />
+              <Flag className="h-3.5 w-3.5 text-secondary-text" aria-hidden="true" />
               {percent}%
             </span>
           </div>

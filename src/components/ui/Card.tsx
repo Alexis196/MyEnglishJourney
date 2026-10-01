@@ -4,16 +4,7 @@ import type { HTMLAttributes } from "react";
 import { cn } from "../../utils/cn";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border border-zinc-200 bg-white p-5 shadow-soft",
-        "dark:border-white/[0.06] dark:bg-surface-card-dark dark:shadow-soft-dark",
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn("rounded-2xl border border-line bg-card p-5 shadow-card", className)} {...props} />;
 }
 
 export function GradientCard({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

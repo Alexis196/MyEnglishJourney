@@ -70,7 +70,7 @@ export function LessonPlayerPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
             <CheckCircle2 className="h-7 w-7" />
           </div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-ink">¡Clase completada!</h2>
+          <h2 className="text-lg font-semibold text-ink">¡Clase completada!</h2>
           <p className="max-w-sm text-sm text-muted">
             Excelente trabajo. Tu progreso se guardó y ya está disponible el siguiente día del programa.
           </p>
@@ -87,11 +87,11 @@ export function LessonPlayerPage() {
       <div>
         <button
           onClick={() => router.push("/program")}
-          className="mb-2 inline-flex items-center gap-1 text-sm text-muted hover:text-zinc-700 dark:hover:text-zinc-200"
+          className="mb-2 inline-flex items-center gap-1 text-sm text-muted hover:text-ink-2"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Volver al programa
         </button>
-        <h1 className="text-xl font-semibold text-zinc-900 dark:text-ink">{lesson.title}</h1>
+        <h1 className="text-xl font-semibold text-ink">{lesson.title}</h1>
         {lesson.objective && <p className="text-sm text-muted">{lesson.objective}</p>}
       </div>
 

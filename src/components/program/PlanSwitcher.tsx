@@ -52,7 +52,7 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
   return (
     <section aria-label="Mis planes" className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-ink">
+        <h2 className="text-sm font-semibold text-ink">
           Mis planes <span className="font-normal text-muted">({plans.length}/{MAX_OPEN_PLANS})</span>
         </h2>
         <Button
@@ -74,7 +74,7 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
             <div
               key={plan.id}
               className={cn(
-                "relative rounded-2xl border border-zinc-200 bg-white shadow-soft dark:border-white/[0.06] dark:bg-surface-card-dark dark:shadow-soft-dark",
+                "relative rounded-2xl border border-line bg-card shadow-card",
                 plan.isCurrent && "border-primary/50 ring-1 ring-primary/30",
               )}
             >
@@ -86,7 +86,7 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
                 className="flex w-full flex-col gap-2 rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <div className="flex items-start justify-between gap-2 pr-8">
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-ink">{plan.title}</span>
+                  <span className="text-sm font-semibold text-ink">{plan.title}</span>
                   {plan.isCurrent && <Badge tone="brand">Actual</Badge>}
                 </div>
                 <p className="text-xs text-muted">
@@ -104,7 +104,7 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
                 disabled={busy}
                 aria-label={`Archivar ${plan.title}`}
                 title="Archivar plan"
-                className="absolute right-2 top-2 rounded-lg p-1.5 text-muted hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:hover:bg-white/[0.06] dark:hover:text-zinc-200"
+                className="absolute right-2 top-2 rounded-lg p-1.5 text-muted hover:bg-hover hover:text-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <Archive className="h-4 w-4" />
               </button>

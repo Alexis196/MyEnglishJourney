@@ -7,30 +7,36 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Semantic, theme-aware tokens: values live in globals.css (:root = light, :root.dark = dark).
         primary: {
-          DEFAULT: "#3478F6",
+          DEFAULT: "rgb(var(--c-primary) / <alpha-value>)",
           dark: "#1E3A8A",
         },
         secondary: {
-          DEFAULT: "#7C3AED",
+          DEFAULT: "rgb(var(--c-secondary) / <alpha-value>)",
           light: "#A78BFA",
         },
-        surface: {
-          dark: "#080A0F",
-          "card-dark": "#11141C",
-          "raised-dark": "#151923",
-          "high-dark": "#191D28",
-          light: "#F4F4F5",
-        },
-        ink: "#F7F8FC",
-        // Light/dark values live in globals.css so `text-muted` adapts to the theme.
+        page: "rgb(var(--c-page) / <alpha-value>)",
+        card: "rgb(var(--c-card) / <alpha-value>)",
+        soft: "rgb(var(--c-soft) / <alpha-value>)",
+        tint: "var(--tint)",
+        track: "var(--track)",
+        hover: "var(--hover)",
+        line: "var(--line)",
+        "line-strong": "var(--line-strong)",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        "ink-2": "rgb(var(--c-ink2) / <alpha-value>)",
         muted: "var(--color-muted)",
+        faint: "rgb(var(--c-faint) / <alpha-value>)",
+        link: "rgb(var(--c-link) / <alpha-value>)",
+        "secondary-text": "rgb(var(--c-secondary-text) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       backgroundImage: {
-        "brand-gradient": "linear-gradient(135deg, #3478F6 0%, #5454F7 48%, #7C3AED 100%)",
+        "brand-gradient": "var(--brand-gradient)",
+        "progress-bar": "var(--progress-bar)",
       },
       borderRadius: {
         xl: "0.875rem",
@@ -38,10 +44,12 @@ const config: Config = {
         "3xl": "1.5rem",
       },
       boxShadow: {
-        soft: "0 2px 12px 0 rgb(0 0 0 / 0.06)",
-        "soft-dark": "0 8px 30px -12px rgb(0 0 0 / 0.6)",
-        glow: "0 10px 30px -10px rgb(52 120 246 / 0.55)",
-        "glow-violet": "0 10px 30px -10px rgb(124 58 237 / 0.5)",
+        card: "var(--shadow-card)",
+        raised: "var(--shadow-raised)",
+        hover: "var(--shadow-hover)",
+        featured: "var(--shadow-featured)",
+        glow: "var(--shadow-glow)",
+        "glow-violet": "var(--shadow-glow-violet)",
       },
       keyframes: {
         "fade-in": {

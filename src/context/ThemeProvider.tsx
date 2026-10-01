@@ -40,7 +40,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const resolvedTheme: "light" | "dark" = theme === "system" ? (systemDark ? "dark" : "light") : theme;
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+    const root = document.documentElement;
+    const isDark = root.classList.contains("dark");
+    if (isDark !== (resolvedTheme === "dark")) {
+      // Briefly enable colour transitions so the switch fades instead of snapping (see globals.css).
+      root.classList.add("theme-switching");
+      window.setTimeout(() => root.classList.remove("theme-switching"), 320);
+    }
+    root.classList.toggle("dark", resolvedTheme === "dark");
   }, [resolvedTheme]);
 
   const setTheme = (next: Theme) => {

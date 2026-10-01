@@ -13,7 +13,7 @@ interface Props {
 export function MultipleChoiceExercise({ exercise, value, onChange, disabled }: Props) {
   return (
     <fieldset className="flex flex-col gap-3" disabled={disabled}>
-      <legend className="mb-1 text-base font-medium text-zinc-900 dark:text-ink">
+      <legend className="mb-1 text-base font-medium text-ink">
         {exercise.content.prompt}
       </legend>
       {exercise.content.options.map((option, index) => (
@@ -24,7 +24,7 @@ export function MultipleChoiceExercise({ exercise, value, onChange, disabled }: 
             "focus-within:ring-2 focus-within:ring-primary",
             value === index
               ? "border-primary bg-primary/5 dark:bg-primary/10"
-              : "border-zinc-200 hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.06]",
+              : "border-line hover:bg-hover",
           )}
         >
           <input
@@ -34,7 +34,7 @@ export function MultipleChoiceExercise({ exercise, value, onChange, disabled }: 
             checked={value === index}
             onChange={() => onChange(index)}
           />
-          <span className="text-zinc-800 dark:text-zinc-200">{option}</span>
+          <span className="text-ink-2">{option}</span>
         </label>
       ))}
     </fieldset>

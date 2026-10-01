@@ -18,9 +18,9 @@ const variantClasses: Record<Variant, string> = {
   secondary:
     "bg-secondary text-white hover:bg-secondary/90 focus-visible:ring-secondary disabled:opacity-50",
   outline:
-    "border border-zinc-300 dark:border-white/10 text-zinc-900 dark:text-ink hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:ring-primary disabled:opacity-50",
+    "border border-line-strong text-ink hover:bg-hover focus-visible:ring-primary disabled:opacity-50",
   ghost:
-    "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:ring-primary disabled:opacity-50",
+    "text-ink-2 hover:bg-hover focus-visible:ring-primary disabled:opacity-50",
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -38,7 +38,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       className={cn(
         "inline-flex items-center justify-center gap-2 font-medium transition-all duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-surface-card-dark",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
         "active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100",
         variantClasses[variant],
         sizeClasses[size],

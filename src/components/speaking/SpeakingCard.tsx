@@ -17,14 +17,14 @@ interface SpeakingCardProps {
 export function SpeakingCard({ question, onNewQuestion, newQuestionDisabled, children }: SpeakingCardProps) {
   return (
     <ArtworkCard
-      image="/images/speaking-mic.webp"
-      imagePositionClassName="object-[78%_65%] @xl:object-right"
+      art="speaking"
+      artPositionClassName="bg-[position:78%_65%] @xl:bg-right"
       contentClassName="@xl:max-w-[58%] @xl:py-8"
       scrim="strong"
     >
       <div className="flex flex-col gap-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7FA8FF]">Pregunta actual</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-link">Pregunta actual</p>
           <p className="mt-2 text-xl font-semibold leading-snug text-ink @xl:text-2xl">{question}</p>
         </div>
 

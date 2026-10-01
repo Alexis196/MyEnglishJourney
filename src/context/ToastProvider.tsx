@@ -59,16 +59,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.95 }}
                 className={cn(
-                  "pointer-events-auto flex items-center gap-2 rounded-xl border bg-white px-4 py-3 text-sm shadow-soft dark:bg-surface-card-dark",
+                  "pointer-events-auto flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm shadow-card",
                   toneClasses[toast.tone],
                 )}
                 role="status"
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="text-zinc-800 dark:text-zinc-100">{toast.message}</span>
+                <span className="text-ink-2">{toast.message}</span>
                 <button
                   onClick={() => dismiss(toast.id)}
-                  className="ml-2 text-muted hover:text-zinc-700 dark:hover:text-zinc-200"
+                  className="ml-2 text-muted hover:text-ink-2"
                   aria-label="Cerrar notificación"
                 >
                   <X className="h-3.5 w-3.5" />

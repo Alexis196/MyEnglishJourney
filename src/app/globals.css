@@ -4,13 +4,192 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme tokens. `:root` is the LIGHT theme; `:root.dark` (class set by ThemeProvider / the inline script in
+ * layout.tsx, which also resolves "system") overrides them with the DARK theme. Components consume these through
+ * Tailwind (bg-card, text-ink, border-line, ...) or var(--*) so they never need per-theme duplicates.
+ * Colour channels (space-separated rgb) are used where Tailwind opacity modifiers (bg-card/80) are needed.
+ */
 :root {
-  color-scheme: light dark;
-  --color-muted: #71717a;
+  color-scheme: light;
+
+  /* surfaces */
+  --c-page: 245 248 252; /* #F5F8FC */
+  --c-card: 255 255 255; /* #FFFFFF */
+  --c-soft: 248 250 253; /* #F8FAFD  secondary surface / inputs */
+  --tint: #f8fafd; /* list tiles inside cards */
+  --track: #dfe7f3; /* progress track, skeletons */
+  --hover: rgba(40, 120, 240, 0.06);
+  --page-gradient: linear-gradient(180deg, #f8faff 0%, #f3f7fd 100%);
+  --main-glow: rgba(117, 87, 232, 0.07);
+  --empty-bg: #f8fafe;
+
+  /* text */
+  --c-ink: 23 33 58; /* #17213A */
+  --c-ink2: 78 92 115; /* #4E5C73 */
+  --color-muted: #68758d;
+  --c-faint: 138 150 170; /* #8A96AA */
+  --c-link: 35 110 232; /* #236EE8 */
+  --c-secondary-text: 117 87 232; /* #7557E8 */
+
+  /* borders */
+  --line: rgba(44, 72, 120, 0.1);
+  --line-strong: #dce3ee;
+
+  /* brand */
+  --c-primary: 40 120 240; /* #2878F0 */
+  --c-secondary: 117 87 232; /* #7557E8 */
+  --brand-gradient: linear-gradient(135deg, #2584f5 0%, #536df3 48%, #8056e9 100%);
+  --progress-bar: linear-gradient(90deg, #18a5ee, #7557e8);
+
+  /* shadows: soft and blue-tinted on light backgrounds */
+  --shadow-card: 0 8px 30px rgba(55, 84, 140, 0.08);
+  --shadow-stat: 0 6px 20px rgba(55, 84, 140, 0.06);
+  --shadow-raised: 0 14px 40px rgba(55, 84, 140, 0.11);
+  --shadow-hover: 0 16px 45px rgba(55, 84, 140, 0.13);
+  --shadow-featured: var(--shadow-raised);
+  --shadow-glow: 0 8px 22px rgba(70, 90, 230, 0.22);
+  --shadow-glow-violet: 0 8px 22px rgba(117, 87, 232, 0.2);
+  --bar-glow: 0 0 10px rgba(117, 87, 232, 0.25);
+
+  /* topbar / sidebar / navigation */
+  --topbar-bg: rgba(255, 255, 255, 0.92);
+  --sidebar-bg: rgba(255, 255, 255, 0.96);
+  --sidebar-border: rgba(40, 70, 120, 0.08);
+  --nav-text: #536079;
+  --nav-icon: #77849b;
+  --nav-hover-bg: rgba(40, 120, 240, 0.055);
+  --nav-active-bg: linear-gradient(135deg, rgba(40, 120, 240, 0.11), rgba(117, 87, 232, 0.08));
+  --nav-active-border: rgba(40, 120, 240, 0.16);
+  --nav-active-text: #236ee8;
+  --nav-active-icon: #2878f0;
+  --nav-active-bar: #2878f0;
+
+  /* segmented theme selector */
+  --seg-bg: #f2f5fa;
+  --seg-border: rgba(40, 70, 120, 0.08);
+  --seg-active: #ffffff;
+  --seg-active-text: #3478f6;
+  --seg-active-shadow: 0 2px 8px rgba(40, 60, 100, 0.1);
+  --seg-text: #77849b;
+
+  /* illustrations (a different file per theme: only the active one is downloaded) */
+  --art-sidebar: url("/images/sidebar-london-light.webp");
+  --art-hero: url("/images/hero-day1-light.webp");
+  --art-plan: url("/images/plan-mountain-light.webp");
+  --art-speaking: url("/images/speaking-mic-light.webp");
+  --art-profile: url("/images/profile-plant-light.webp");
+
+  /* text scrims over illustrations: white on light, navy on dark */
+  --scrim-soft: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.92) 32%,
+    rgba(255, 255, 255, 0.25) 58%,
+    rgba(255, 255, 255, 0) 72%
+  );
+  --scrim-strong: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.94) 40%,
+    rgba(255, 255, 255, 0.4) 62%,
+    rgba(255, 255, 255, 0) 78%
+  );
+
+  /* hero details */
+  --hero-title: #122044;
+  --hero-text: #4e5c73;
+  --hero-eyebrow: #68758d;
+  --hero-accent-img: linear-gradient(90deg, #2584f5, #8056e9);
+  --hero-accent-text: transparent;
 }
 
 :root.dark {
+  color-scheme: dark;
+
+  --c-page: 8 10 15; /* #080A0F */
+  --c-card: 17 20 28; /* #11141C */
+  --c-soft: 21 25 35; /* #151923 */
+  --tint: rgba(255, 255, 255, 0.04);
+  --track: rgba(255, 255, 255, 0.06);
+  --hover: rgba(255, 255, 255, 0.06);
+  --page-gradient: none;
+  --main-glow: rgba(84, 84, 247, 0.1);
+  --empty-bg: transparent;
+
+  --c-ink: 247 248 252; /* #F7F8FC */
+  --c-ink2: 212 212 216; /* zinc-300 */
   --color-muted: #9299aa;
+  --c-faint: 139 139 148;
+  --c-link: 127 168 255; /* #7FA8FF */
+  --c-secondary-text: 167 139 250; /* #A78BFA */
+
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.1);
+
+  --c-primary: 52 120 246; /* #3478F6 */
+  --c-secondary: 124 58 237; /* #7C3AED */
+  --brand-gradient: linear-gradient(135deg, #3478f6 0%, #5454f7 48%, #7c3aed 100%);
+  --progress-bar: var(--brand-gradient);
+
+  --shadow-card: 0 8px 30px -12px rgb(0 0 0 / 0.6);
+  --shadow-stat: var(--shadow-card);
+  --shadow-raised: var(--shadow-card);
+  --shadow-hover: 0 10px 30px -10px rgb(52 120 246 / 0.55);
+  --shadow-featured: 0 10px 30px -10px rgb(52 120 246 / 0.55);
+  --shadow-glow: 0 10px 30px -10px rgb(52 120 246 / 0.55);
+  --shadow-glow-violet: 0 10px 30px -10px rgb(124 58 237 / 0.5);
+  --bar-glow: 0 0 12px rgba(84, 84, 247, 0.55);
+
+  --topbar-bg: rgba(8, 10, 15, 0.8);
+  --sidebar-bg: #0a0d14;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --nav-text: #9299aa;
+  --nav-icon: #9299aa;
+  --nav-hover-bg: rgba(255, 255, 255, 0.05);
+  --nav-active-bg: rgba(52, 120, 246, 0.14);
+  --nav-active-border: rgba(52, 120, 246, 0.25);
+  --nav-active-text: #f7f8fc;
+  --nav-active-icon: #3478f6;
+  --nav-active-bar: transparent;
+
+  --seg-bg: #151923;
+  --seg-border: rgba(255, 255, 255, 0.08);
+  --seg-active: var(--brand-gradient);
+  --seg-active-text: #ffffff;
+  --seg-active-shadow: var(--shadow-glow);
+  --seg-text: #9299aa;
+
+  --art-sidebar: url("/images/sidebar-london.webp");
+  --art-hero: url("/images/hero-day1.webp");
+  --art-plan: url("/images/plan-mountain.webp");
+  --art-speaking: url("/images/speaking-mic.webp");
+  --art-profile: url("/images/profile-plant.webp");
+
+  --scrim-soft: linear-gradient(90deg, rgba(10, 13, 28, 0.7), rgba(10, 13, 28, 0.25) 50%, transparent);
+  --scrim-strong: linear-gradient(90deg, rgba(10, 13, 28, 0.95), rgba(10, 13, 28, 0.7) 50%, rgba(10, 13, 28, 0.05));
+
+  --hero-title: #ffffff;
+  --hero-text: rgba(255, 255, 255, 0.85);
+  --hero-eyebrow: rgba(255, 255, 255, 0.75);
+  --hero-accent-img: none;
+  --hero-accent-text: #ffffff;
+}
+
+/*
+ * Smooth theme switch: ThemeProvider adds .theme-switching to <html> for a moment when the theme changes, so
+ * only colour-like properties animate (never background-image) and normal hover/transform transitions are untouched.
+ */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    fill 220ms ease,
+    stroke 220ms ease,
+    box-shadow 220ms ease !important;
 }
 
 html,
@@ -20,7 +199,8 @@ body {
 }
 
 body {
-  background-color: #f4f4f5;
+  background-color: rgb(var(--c-page));
+  color: rgb(var(--c-ink));
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -65,11 +245,6 @@ body {
   --auth-error-border: rgba(240, 134, 143, 0.55);
   --auth-glow-blue: rgba(52, 120, 246, 0.14);
   --auth-glow-violet: rgba(124, 58, 237, 0.13);
-}
-
-.dark body {
-  background-color: #080a0f;
-  color: #f7f8fc;
 }
 
 @media (prefers-reduced-motion: reduce) {

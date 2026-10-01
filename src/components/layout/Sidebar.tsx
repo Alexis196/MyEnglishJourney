@@ -26,15 +26,8 @@ function SidebarScenery() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[min(52%,540px)] overflow-hidden"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/sidebar-london.webp"
-        alt=""
-        loading="lazy"
-        decoding="async"
-        className="h-full w-full object-cover object-[35%_bottom] [mask-image:linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.55)_35%,black_75%)]"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0A0D14] via-transparent to-[#0A0D14]/30" />
+      {/* Dark/light skyline comes from --art-sidebar; the mask fades its top edge into the sidebar background. */}
+      <div className="h-full w-full bg-[image:var(--art-sidebar)] bg-cover bg-no-repeat bg-[position:35%_bottom] [mask-image:linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.55)_35%,black_75%)]" />
     </div>
   );
 }
@@ -55,18 +48,18 @@ function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: 
             aria-label={collapsed ? label : undefined}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "group flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
+              "group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
               collapsed && "justify-center px-0",
               isActive
-                ? "border-primary/25 bg-primary/[0.14] text-ink shadow-[inset_0_0_0_1px_rgba(52,120,246,0.06)]"
-                : "border-transparent text-[#9299AA] hover:bg-white/[0.05] hover:text-ink",
+                ? "border-[var(--nav-active-border)] [background:var(--nav-active-bg)] text-[var(--nav-active-text)] before:absolute before:bottom-2 before:left-0 before:top-2 before:w-[3px] before:rounded-full before:bg-[var(--nav-active-bar)]"
+                : "border-transparent text-[var(--nav-text)] hover:bg-[var(--nav-hover-bg)] hover:text-ink",
             )}
           >
             <Icon
               className={cn(
                 "h-[18px] w-[18px] shrink-0 transition-colors",
-                isActive ? "text-primary" : "group-hover:text-ink",
+                isActive ? "text-[var(--nav-active-icon)]" : "text-[var(--nav-icon)] group-hover:text-ink",
               )}
               aria-hidden="true"
             />
@@ -86,7 +79,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
       <motion.aside
         animate={{ width: collapsed ? 76 : 240 }}
         transition={{ duration: 0.2, ease: "easeInOut" }}
-        className="relative isolate hidden shrink-0 flex-col overflow-hidden border-r border-white/[0.06] bg-[#0A0D14] px-3 py-4 md:flex"
+        className="relative isolate hidden shrink-0 flex-col overflow-hidden border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] px-3 py-4 md:flex"
       >
         {/* The skyline is skipped in the collapsed rail, where it would only add noise. */}
         {!collapsed && <SidebarScenery />}
@@ -102,7 +95,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
 
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="relative z-10 flex items-center justify-center rounded-xl bg-[#0A0D14]/60 p-2 text-[#9299AA] backdrop-blur-sm transition-colors hover:bg-white/[0.08] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative z-10 flex items-center justify-center rounded-xl bg-[var(--nav-hover-bg)] p-2 text-[var(--nav-text)] backdrop-blur-sm transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           aria-label={collapsed ? "Expandir barra lateral" : "Contraer barra lateral"}
           title={collapsed ? "Expandir barra lateral" : "Contraer barra lateral"}
         >
@@ -118,7 +111,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+              className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
               onClick={onMobileClose}
               aria-hidden="true"
             />
@@ -127,7 +120,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.2, ease: "easeInOut" }}
-              className="absolute inset-y-0 left-0 isolate flex w-64 max-w-[80vw] flex-col overflow-hidden border-r border-white/[0.06] bg-[#0A0D14] px-3 py-4 shadow-soft-dark"
+              className="absolute inset-y-0 left-0 isolate flex w-64 max-w-[80vw] flex-col overflow-hidden border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] px-3 py-4 shadow-raised"
             >
               <SidebarScenery />
 
@@ -138,7 +131,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
                 </div>
                 <button
                   onClick={onMobileClose}
-                  className="rounded-xl p-2 text-[#9299AA] hover:bg-white/[0.08] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="rounded-xl p-2 text-[var(--nav-text)] hover:bg-[var(--nav-hover-bg)] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   aria-label="Cerrar menú"
                 >
                   <X className="h-4 w-4" />

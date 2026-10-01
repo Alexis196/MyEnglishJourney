@@ -56,7 +56,7 @@ export function SpeakingLabPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900 dark:text-ink">Speaking Lab</h1>
+        <h1 className="text-xl font-semibold text-ink">Speaking Lab</h1>
         <p className="text-sm text-muted">Practicá respondiendo en voz alta. La IA analiza lo que dijiste.</p>
       </div>
 

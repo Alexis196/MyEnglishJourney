@@ -35,20 +35,20 @@ export function SpeakingFeedbackResult({ result }: { result: SpeakingSessionResu
       </div>
 
       <Card>
-        <h3 className="mb-1.5 text-sm font-semibold text-zinc-900 dark:text-ink">Lo que dijiste</h3>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">{feedback.transcript}</p>
+        <h3 className="mb-1.5 text-sm font-semibold text-ink">Lo que dijiste</h3>
+        <p className="text-sm text-ink-2">{feedback.transcript}</p>
         <p className="mt-2 text-sm italic text-muted">{feedback.translation}</p>
       </Card>
 
       {feedback.grammarErrors.length > 0 && (
         <Card>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-ink">Errores gramaticales</h3>
+          <h3 className="mb-2 text-sm font-semibold text-ink">Errores gramaticales</h3>
           <ul className="flex flex-col gap-2 text-sm">
             {feedback.grammarErrors.map((err, i) => (
-              <li key={i} className="rounded-xl bg-zinc-50 p-3 dark:bg-white/[0.04]">
+              <li key={i} className="rounded-xl bg-tint p-3">
                 <p>
-                  <span className="text-zinc-500 line-through">{err.original}</span> →{" "}
-                  <span className="font-medium text-zinc-900 dark:text-ink">{err.corrected}</span>
+                  <span className="text-faint line-through">{err.original}</span> →{" "}
+                  <span className="font-medium text-ink">{err.corrected}</span>
                 </p>
                 <p className="mt-1 text-xs text-muted">{err.explanation}</p>
               </li>
@@ -58,19 +58,19 @@ export function SpeakingFeedbackResult({ result }: { result: SpeakingSessionResu
       )}
 
       <Card>
-        <h3 className="mb-1.5 text-sm font-semibold text-zinc-900 dark:text-ink">Una forma más natural de decirlo</h3>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">{feedback.moreNaturalExpression}</p>
+        <h3 className="mb-1.5 text-sm font-semibold text-ink">Una forma más natural de decirlo</h3>
+        <p className="text-sm text-ink-2">{feedback.moreNaturalExpression}</p>
       </Card>
 
       {feedback.vocabularySuggestions.length > 0 && (
         <Card>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-ink">Vocabulario sugerido</h3>
+          <h3 className="mb-2 text-sm font-semibold text-ink">Vocabulario sugerido</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {feedback.vocabularySuggestions.map((v, i) => (
-              <div key={i} className="rounded-xl bg-zinc-50 p-3 text-sm dark:bg-white/[0.04]">
-                <p className="font-medium text-zinc-900 dark:text-ink">{v.word}</p>
+              <div key={i} className="rounded-xl bg-tint p-3 text-sm">
+                <p className="font-medium text-ink">{v.word}</p>
                 <p className="text-muted">{v.meaning}</p>
-                <p className="mt-1 italic text-zinc-500 dark:text-zinc-400">"{v.example}"</p>
+                <p className="mt-1 italic text-faint">"{v.example}"</p>
               </div>
             ))}
           </div>
@@ -78,7 +78,7 @@ export function SpeakingFeedbackResult({ result }: { result: SpeakingSessionResu
       )}
 
       <Card className="border-primary/20 bg-primary/5">
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">{feedback.encouragingNote}</p>
+        <p className="text-sm text-ink-2">{feedback.encouragingNote}</p>
         <p className="mt-2 text-sm font-medium text-primary">{feedback.recommendation}</p>
       </Card>
     </motion.div>

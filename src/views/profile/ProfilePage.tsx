@@ -66,12 +66,12 @@ export function ProfilePage() {
           <Input label="Nombre completo" error={errors.fullName?.message} {...register("fullName")} />
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="currentLevel" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="currentLevel" className="text-sm font-medium text-ink-2">
               Nivel actual (CEFR)
             </label>
             <select
               id="currentLevel"
-              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-surface-raised-dark dark:text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-xl border border-line-strong bg-soft px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               {...register("currentLevel")}
             >
               {CEFR_LEVELS.map((level) => (
@@ -83,12 +83,12 @@ export function ProfilePage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="explanationLanguage" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="explanationLanguage" className="text-sm font-medium text-ink-2">
               Idioma de las explicaciones
             </label>
             <select
               id="explanationLanguage"
-              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-surface-raised-dark dark:text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-xl border border-line-strong bg-soft px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               {...register("explanationLanguage")}
             >
               <option value="es">Español</option>

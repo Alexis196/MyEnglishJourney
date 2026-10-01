@@ -33,7 +33,7 @@ function DayCell({ day }: { day: PlanDay }) {
           "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-500/10 dark:text-emerald-400",
         day.status === "available" &&
           "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10",
-        day.status === "locked" && "border-zinc-200 bg-zinc-50 text-muted dark:border-white/[0.06] dark:bg-white/[0.03]",
+        day.status === "locked" && "border-line bg-tint text-muted",
       )}
     >
       <Icon className="h-4 w-4" aria-hidden="true" />
@@ -67,7 +67,7 @@ export function ProgramOverviewPage() {
     return (
       <div className="flex flex-col gap-4">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-ink">Nuevo plan de 90 días</h1>
+          <h1 className="text-xl font-semibold text-ink">Nuevo plan de 90 días</h1>
           <p className="mt-1 text-sm text-muted">
             Tus otros planes se conservan; podés cambiar entre ellos cuando quieras.
           </p>
@@ -81,7 +81,7 @@ export function ProgramOverviewPage() {
     return (
       <div className="flex flex-col gap-4">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-ink">Creá tu programa de 90 días</h1>
+          <h1 className="text-xl font-semibold text-ink">Creá tu programa de 90 días</h1>
           <p className="mt-1 text-sm text-muted">
             Contanos tu nivel y objetivos, y la IA arma tu plan personalizado.
           </p>
@@ -117,7 +117,7 @@ export function ProgramOverviewPage() {
       {weeks.map(([weekNumber, days]) => (
         <Card key={weekNumber}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-ink">Semana {weekNumber}</h2>
+            <h2 className="text-sm font-semibold text-ink">Semana {weekNumber}</h2>
             <Badge tone="brand">{days.filter((d) => d.status === "completed").length}/{days.length} completados</Badge>
           </div>
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">

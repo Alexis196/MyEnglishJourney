@@ -11,12 +11,13 @@ const options = [
   { value: "dark" as const, icon: Moon, label: "Tema oscuro" },
 ];
 
+/** Segmented control. Colours come from the --seg-* tokens, so light and dark share one component. */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
   return (
     <div
-      className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-white p-1 shadow-sm transition-colors duration-300 dark:border-white/[0.08] dark:bg-surface-raised-dark dark:shadow-none"
+      className="flex items-center gap-0.5 rounded-full border border-[var(--seg-border)] bg-[var(--seg-bg)] p-1"
       role="radiogroup"
       aria-label="Preferencia de tema"
     >
@@ -31,10 +32,10 @@ export function ThemeToggle() {
           onClick={() => setTheme(value)}
           className={cn(
             "flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-surface-raised-dark",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--seg-bg)]",
             theme === value
-              ? "bg-brand-gradient text-white shadow-glow"
-              : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-[#9299AA] dark:hover:bg-white/[0.06] dark:hover:text-ink",
+              ? "[background:var(--seg-active)] text-[var(--seg-active-text)] shadow-[var(--seg-active-shadow)]"
+              : "text-[var(--seg-text)] hover:bg-hover hover:text-ink",
           )}
         >
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />

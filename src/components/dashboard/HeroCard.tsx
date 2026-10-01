@@ -12,30 +12,33 @@ export function HeroCard({ summary }: { summary: DashboardSummary }) {
 
   return (
     <ArtworkCard
-      image="/images/hero-day1.webp"
-      imagePositionClassName="object-[85%_50%] @xl:object-right"
+      art="hero"
+      artPositionClassName="bg-[position:85%_50%] @xl:bg-right"
       contentClassName="@xl:max-w-[52%] @xl:py-9"
       scrim="soft"
-      glow
+      featured
     >
       <div className="flex flex-col gap-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Continuá tu camino</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-white @xl:text-4xl">
-            Día {summary.currentDay} de {summary.totalDays}
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--hero-eyebrow)]">Continuá tu camino</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight text-[var(--hero-title)] @xl:text-4xl">
+            Día {summary.currentDay} de{" "}
+            <span className="bg-[image:var(--hero-accent-img)] bg-clip-text text-[color:var(--hero-accent-text)]">
+              {summary.totalDays}
+            </span>
           </h2>
-          <p className="mt-1.5 text-sm text-white/85">Tu meta está cada vez más cerca 🚀</p>
+          <p className="mt-1.5 text-sm text-[var(--hero-text)]">Tu meta está cada vez más cerca 🚀</p>
         </div>
 
         <div className="max-w-sm">
-          <div className="mb-1.5 flex items-center justify-between text-sm text-white/85">
+          <div className="mb-1.5 flex items-center justify-between text-sm text-[var(--hero-text)]">
             <span>Progreso general</span>
             <span className="font-semibold tabular-nums">{progress}%</span>
           </div>
           <ProgressBar
             value={progress}
-            trackClassName="bg-white/20"
-            barClassName="bg-white shadow-none"
+            trackClassName="dark:bg-white/20"
+            barClassName="dark:bg-none dark:bg-white dark:shadow-none"
             aria-label="Progreso del programa de 90 días"
           />
         </div>
@@ -43,7 +46,7 @@ export function HeroCard({ summary }: { summary: DashboardSummary }) {
         {summary.nextLesson && (
           <PrimaryLink
             href={`/program/lessons/${summary.nextLesson.lessonId}`}
-            tone="light"
+            tone="hero"
             className="w-fit"
           >
             Continuar aprendiendo

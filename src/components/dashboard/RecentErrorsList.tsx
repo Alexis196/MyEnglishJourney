@@ -8,7 +8,7 @@ import type { DashboardSummary } from "@myenglishjourney/shared";
 export function RecentErrorsList({ errors }: { errors: DashboardSummary["recentErrors"] }) {
   return (
     <Card>
-      <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-ink">Últimos errores detectados</h3>
+      <h3 className="mb-3 text-sm font-semibold text-ink">Últimos errores detectados</h3>
       {errors.length === 0 ? (
         <EmptyState
           icon={AlertCircle}
@@ -18,9 +18,9 @@ export function RecentErrorsList({ errors }: { errors: DashboardSummary["recentE
       ) : (
         <ul className="flex flex-col gap-3">
           {errors.map((error) => (
-            <li key={error.id} className="rounded-xl bg-zinc-50 p-3 text-sm dark:bg-white/[0.04]">
-              <p className="text-zinc-500 line-through dark:text-zinc-500">{error.originalText}</p>
-              <p className="font-medium text-zinc-900 dark:text-ink">{error.correctedText}</p>
+            <li key={error.id} className="rounded-xl bg-tint p-3 text-sm">
+              <p className="text-faint line-through">{error.originalText}</p>
+              <p className="font-medium text-ink">{error.correctedText}</p>
               <p className="mt-1 text-xs text-muted">{error.explanation}</p>
             </li>
           ))}

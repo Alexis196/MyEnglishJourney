@@ -8,8 +8,8 @@ const base = [
 /** Shared looks for the app's main call to action (PrimaryButton / PrimaryLink). */
 export const primaryActionClasses = {
   brand: `${base} bg-brand-gradient text-white shadow-glow ring-1 ring-inset ring-white/15 hover:brightness-110`,
-  // For use on top of the bright gradient illustrations, where a gradient button would not stand out.
-  light: `${base} bg-white text-[#2447C8] shadow-soft-dark hover:bg-white/90`,
+  // Hero CTA: brand gradient on the light theme; white on the dark theme's bright gradient illustration.
+  hero: `${base} bg-brand-gradient text-white shadow-glow ring-1 ring-inset ring-white/15 hover:brightness-110 dark:bg-none dark:bg-white dark:text-[#2447C8] dark:ring-0 dark:hover:bg-white/90 dark:hover:brightness-100`,
 } as const;
 
 export type PrimaryTone = keyof typeof primaryActionClasses;
