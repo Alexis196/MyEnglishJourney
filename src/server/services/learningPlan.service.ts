@@ -26,9 +26,13 @@ function toPlan(plan: LearningPlanRow) {
 
 export const learningPlanService = {
   async list(supabase: SupabaseClient, userId: string): Promise<LearningPlanListResponse> {
-    const profile = await profileRepository.getById(supabase, userId);
-    const plans = await learningPlanRepository.listForUser(supabase, userId);
-    const current = await learningPlanRepository.getCurrentForUser(supabase, userId, profile.current_plan_id);
+    const [profile, plans] = await Promise.all([
+      profileRepository.getById(supabase, userId),
+      learningPlanRepository.listForUser(supabase, userId),
+    ]);
+    // Same rule as getCurrentForUser, resolved in memory from the list we already have.
+    const current =
+      plans.find((plan) => plan.id === profile.current_plan_id) ?? plans.find((plan) => plan.status === "active");
     const completed = await planDayRepository.countCompletedByPlan(
       supabase,
       plans.map((p) => p.id),

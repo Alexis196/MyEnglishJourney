@@ -1,19 +1,28 @@
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createRequestScopedClient } from "../lib/supabaseClient";
 import { UnauthorizedError } from "../utils/AppError";
 
 type ClientFactory = (accessToken: string) => SupabaseClient;
 
+/** The identity extracted from a verified access token (routes only ever need the id). */
+export interface AuthUser {
+  id: string;
+  email?: string;
+}
+
 export interface AuthContext {
-  user: User;
+  user: AuthUser;
   supabase: SupabaseClient;
 }
 
 /**
- * Verifies the bearer token against Supabase Auth and returns both the
- * authenticated user and a request-scoped Supabase client (RLS-enforced).
- * clientFactory is injectable so tests can supply a mocked Supabase client
- * instead of hitting a real project.
+ * Verifies the bearer token and returns the authenticated user plus a request-scoped
+ * Supabase client (RLS-enforced).
+ *
+ * Uses getClaims(): with asymmetric signing keys the JWT signature and expiry are checked
+ * locally (public keys are cached), saving a network round trip to Supabase Auth on every API
+ * call; with legacy symmetric keys it transparently falls back to asking the Auth server.
+ * clientFactory is injectable so tests can supply a mocked Supabase client.
  */
 export async function authenticate(
   request: Request,
@@ -27,11 +36,12 @@ export async function authenticate(
   }
 
   const client = clientFactory(token);
-  const { data, error } = await client.auth.getUser(token);
+  const { data, error } = await client.auth.getClaims(token);
+  const claims = data?.claims;
 
-  if (error || !data.user) {
+  if (error || !claims?.sub) {
     throw new UnauthorizedError("Token inválido o expirado");
   }
 
-  return { user: data.user, supabase: client };
+  return { user: { id: claims.sub, email: typeof claims.email === "string" ? claims.email : undefined }, supabase: client };
 }

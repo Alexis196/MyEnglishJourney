@@ -3,12 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Profile, UpdateProfileInput } from "@myenglishjourney/shared";
 import { apiClient } from "../lib/apiClient";
+import { profileQuery } from "../lib/queries";
 
 export function useProfile() {
-  return useQuery({
-    queryKey: ["profile", "me"],
-    queryFn: () => apiClient.get<Profile>("/api/auth/me"),
-  });
+  return useQuery(profileQuery);
 }
 
 export function useUpdateProfile() {

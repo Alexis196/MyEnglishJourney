@@ -1,14 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CurrentLearningPlanResponse, LearningPlanListResponse } from "@myenglishjourney/shared";
+import type { CurrentLearningPlanResponse } from "@myenglishjourney/shared";
 import { apiClient } from "../lib/apiClient";
+import { planListQuery } from "../lib/queries";
 
 export function useLearningPlans() {
-  return useQuery({
-    queryKey: ["learning-plan", "list"],
-    queryFn: () => apiClient.get<LearningPlanListResponse>("/api/learning-plan"),
-  });
+  return useQuery(planListQuery);
 }
 
 /** Switching or archiving a plan changes what the program page, lessons and dashboard show. */

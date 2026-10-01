@@ -10,8 +10,33 @@ function isoDateOnly(date: Date): string {
 
 export const dashboardService = {
   async getSummary(supabase: SupabaseClient, userId: string): Promise<DashboardSummary> {
-    const profile = await profileRepository.getById(supabase, userId);
-    const plan = await learningPlanRepository.getCurrentForUser(supabase, userId, profile.current_plan_id);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 6);
+    sevenDaysAgo.setUTCHours(0, 0, 0, 0);
+
+    // Everything below is independent of which plan is selected, so it all runs in one round
+    // trip instead of one query after another (each one costs a full network hop to Supabase).
+    const [profile, fallbackPlan, wordsResult, errorsResult, sessionsResult, attemptsResult] = await Promise.all([
+      profileRepository.getById(supabase, userId),
+      learningPlanRepository.getActiveForUser(supabase, userId),
+      supabase.from("vocabulary").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase
+        .from("error_journal")
+        .select("id, original_text, corrected_text, explanation, error_category")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("study_sessions")
+        .select("started_at, duration_seconds")
+        .eq("user_id", userId)
+        .gte("started_at", sevenDaysAgo.toISOString()),
+      supabase
+        .from("exercise_attempts")
+        .select("submitted_at")
+        .eq("user_id", userId)
+        .gte("submitted_at", sevenDaysAgo.toISOString()),
+    ]);
 
     const emptySummary: DashboardSummary = {
       hasActivePlan: false,
@@ -28,11 +53,19 @@ export const dashboardService = {
       weeklyProgress: [],
     };
 
+    // The selected plan wins; reuse the already-fetched active plan when it is the same one.
+    const plan =
+      profile.current_plan_id && fallbackPlan?.id !== profile.current_plan_id
+        ? ((await learningPlanRepository.getCurrentForUser(supabase, userId, profile.current_plan_id)) ?? fallbackPlan)
+        : fallbackPlan;
+
     if (!plan) return emptySummary;
 
-    const days = await planDayRepository.listForPlan(supabase, plan.id);
+    const [days, nextDay] = await Promise.all([
+      planDayRepository.listForPlan(supabase, plan.id),
+      planDayRepository.getNextAvailable(supabase, plan.id),
+    ]);
     const completedCount = days.filter((d) => d.status === "completed").length;
-    const nextDay = await planDayRepository.getNextAvailable(supabase, plan.id);
 
     let nextLesson: DashboardSummary["nextLesson"] = null;
     if (nextDay?.lesson_id) {
@@ -42,46 +75,18 @@ export const dashboardService = {
       }
     }
 
-    const { count: wordsLearnedCount } = await supabase
-      .from("vocabulary")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId);
-
-    const { data: errorRows } = await supabase
-      .from("error_journal")
-      .select("id, original_text, corrected_text, explanation, error_category")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 6);
-    sevenDaysAgo.setUTCHours(0, 0, 0, 0);
-
-    const { data: studySessions } = await supabase
-      .from("study_sessions")
-      .select("started_at, duration_seconds")
-      .eq("user_id", userId)
-      .gte("started_at", sevenDaysAgo.toISOString());
-
-    const { data: attempts } = await supabase
-      .from("exercise_attempts")
-      .select("submitted_at")
-      .eq("user_id", userId)
-      .gte("submitted_at", sevenDaysAgo.toISOString());
-
     const weeklyMap = new Map<string, { minutesStudied: number; exercisesCompleted: number }>();
     for (let i = 0; i < 7; i++) {
       const d = new Date(sevenDaysAgo);
       d.setUTCDate(d.getUTCDate() + i);
       weeklyMap.set(isoDateOnly(d), { minutesStudied: 0, exercisesCompleted: 0 });
     }
-    for (const session of studySessions ?? []) {
+    for (const session of sessionsResult.data ?? []) {
       const key = isoDateOnly(new Date(session.started_at as string));
       const entry = weeklyMap.get(key);
       if (entry) entry.minutesStudied += Math.round(((session.duration_seconds as number) ?? 0) / 60);
     }
-    for (const attempt of attempts ?? []) {
+    for (const attempt of attemptsResult.data ?? []) {
       const key = isoDateOnly(new Date(attempt.submitted_at as string));
       const entry = weeklyMap.get(key);
       if (entry) entry.exercisesCompleted += 1;
@@ -99,8 +104,8 @@ export const dashboardService = {
       currentStreak: profile.streak_count,
       longestStreak: profile.longest_streak,
       nextLesson,
-      wordsLearnedCount: wordsLearnedCount ?? 0,
-      recentErrors: (errorRows ?? []).map((row) => ({
+      wordsLearnedCount: wordsResult.count ?? 0,
+      recentErrors: (errorsResult.data ?? []).map((row) => ({
         id: row.id as string,
         originalText: row.original_text as string,
         correctedText: row.corrected_text as string,

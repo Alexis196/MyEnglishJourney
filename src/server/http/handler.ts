@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import type { ZodType, ZodTypeDef } from "zod";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { AppError } from "../utils/AppError";
 import { logger } from "../utils/logger";
-import { authenticate } from "./requireAuth";
+import { authenticate, type AuthUser } from "./requireAuth";
 import { assertServices, type ServiceName } from "./serviceAvailability";
 
 interface HandlerContext<TBody, TParams> {
   request: Request;
-  user: User;
+  user: AuthUser;
   supabase: SupabaseClient;
   body: TBody;
   params: TParams;

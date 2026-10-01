@@ -20,7 +20,7 @@ export function useUpdateLessonProgress(lessonId: string | undefined) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson", lessonId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["learning-plan", "current"] });
+      queryClient.invalidateQueries({ queryKey: ["learning-plan"] });
     },
   });
 }

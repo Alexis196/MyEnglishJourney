@@ -9,19 +9,19 @@ function makeRequest(authorization?: string): Request {
   });
 }
 
-function makeMockClient(getUserImpl: () => Promise<{ data: { user: unknown }; error: unknown }>): SupabaseClient {
-  return { auth: { getUser: getUserImpl } } as unknown as SupabaseClient;
+function makeMockClient(getClaimsImpl: () => Promise<{ data: { claims: unknown } | null; error: unknown }>): SupabaseClient {
+  return { auth: { getClaims: getClaimsImpl } } as unknown as SupabaseClient;
 }
 
 describe("authenticate", () => {
   it("rejects requests with no Authorization header", async () => {
-    const factory = () => makeMockClient(async () => ({ data: { user: null }, error: null }));
+    const factory = () => makeMockClient(async () => ({ data: null, error: null }));
     await expect(authenticate(makeRequest(undefined), factory)).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
   it("rejects an invalid or expired token", async () => {
     const clientFactory = vi.fn(() =>
-      makeMockClient(async () => ({ data: { user: null }, error: { message: "invalid token" } })),
+      makeMockClient(async () => ({ data: null, error: { message: "invalid token" } })),
     );
 
     await expect(authenticate(makeRequest("Bearer bad-token"), clientFactory)).rejects.toBeInstanceOf(
@@ -31,12 +31,14 @@ describe("authenticate", () => {
   });
 
   it("returns the user and supabase client for a valid token", async () => {
-    const fakeUser = { id: "user-123", email: "test@example.com" };
-    const fakeClient = makeMockClient(async () => ({ data: { user: fakeUser }, error: null }));
+    const fakeClient = makeMockClient(async () => ({
+      data: { claims: { sub: "user-123", email: "test@example.com" } },
+      error: null,
+    }));
 
     const result = await authenticate(makeRequest("Bearer good-token"), () => fakeClient);
 
-    expect(result.user).toEqual(fakeUser);
+    expect(result.user).toEqual({ id: "user-123", email: "test@example.com" });
     expect(result.supabase).toBe(fakeClient);
   });
 
