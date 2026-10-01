@@ -31,7 +31,7 @@ export const exercisePublicSchema = z.discriminatedUnion("exerciseType", [
   z.object({
     ...exerciseBaseShape,
     exerciseType: z.literal("word_ordering"),
-    content: z.object({ words: z.array(z.string()) }),
+    content: z.object({ words: z.array(z.string()), prompt: z.string().optional() }),
   }),
   z.object({
     ...exerciseBaseShape,
@@ -46,7 +46,12 @@ export const exercisePublicSchema = z.discriminatedUnion("exerciseType", [
   z.object({
     ...exerciseBaseShape,
     exerciseType: z.literal("free_writing"),
-    content: z.object({ prompt: z.string(), minWords: z.number().int().positive().optional() }),
+    content: z.object({
+      prompt: z.string(),
+      minWords: z.number().int().positive().optional(),
+      /** Sentence openers offered as help (mostly at the lower levels). */
+      starters: z.array(z.string()).optional(),
+    }),
   }),
   z.object({
     ...exerciseBaseShape,
@@ -66,7 +71,7 @@ export const exercisePublicSchema = z.discriminatedUnion("exerciseType", [
   z.object({
     ...exerciseBaseShape,
     exerciseType: z.literal("grammar_error_correction"),
-    content: z.object({ sentenceWithError: z.string() }),
+    content: z.object({ sentenceWithError: z.string(), prompt: z.string().optional() }),
   }),
 ]);
 export type ExercisePublic = z.infer<typeof exercisePublicSchema>;
@@ -78,5 +83,8 @@ export const exerciseResponseSchema = z.discriminatedUnion("exerciseType", [
   z.object({ exerciseType: z.literal("translation_es_en"), answer: z.string().trim().min(1) }),
   z.object({ exerciseType: z.literal("translation_en_es"), answer: z.string().trim().min(1) }),
   z.object({ exerciseType: z.literal("free_writing"), answer: z.string().trim().min(1) }),
+  // Ordered words are sent joined with spaces; both are corrected deterministically (no AI).
+  z.object({ exerciseType: z.literal("word_ordering"), answer: z.string().trim().min(1) }),
+  z.object({ exerciseType: z.literal("grammar_error_correction"), answer: z.string().trim().min(1) }),
 ]);
 export type ExerciseResponse = z.infer<typeof exerciseResponseSchema>;

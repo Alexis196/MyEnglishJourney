@@ -73,6 +73,23 @@ export function describeExercise(
       const accepted = Array.isArray(answerKey.acceptedAnswers) ? (answerKey.acceptedAnswers as unknown[]) : [];
       return { exerciseType: exercise.exerciseType, question, studentAnswer: clip(response.answer), expectedAnswer: clip(accepted[0]) };
     }
+    case "word_ordering": {
+      const bank = Array.isArray(content.words) ? (content.words as unknown[]).filter((w): w is string => typeof w === "string") : [];
+      if (bank.length === 0) return null;
+      const accepted = Array.isArray(answerKey.acceptedAnswers) ? (answerKey.acceptedAnswers as unknown[]) : [];
+      return {
+        exerciseType: exercise.exerciseType,
+        question: `Put in order: ${bank.join(" / ")}`,
+        studentAnswer: clip(response.answer),
+        expectedAnswer: clip(accepted[0]),
+      };
+    }
+    case "grammar_error_correction": {
+      const question = clip(content.sentenceWithError);
+      if (!question) return null;
+      const accepted = Array.isArray(answerKey.acceptedAnswers) ? (answerKey.acceptedAnswers as unknown[]) : [];
+      return { exerciseType: exercise.exerciseType, question: `Correct: ${question}`, studentAnswer: clip(response.answer), expectedAnswer: clip(accepted[0]) };
+    }
     case "translation_es_en":
     case "translation_en_es": {
       const question = clip(content.sourceText);

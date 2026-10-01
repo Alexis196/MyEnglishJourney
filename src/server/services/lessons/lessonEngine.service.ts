@@ -15,7 +15,7 @@ import { AIProviderFailureError } from "../ai/AIRouter";
 import type { GeneratedLesson } from "../ai/planGeneration.schema";
 import { toDbExercise } from "./exerciseMapper";
 import { resolvePersonalization, type LearningContext } from "./learningContext";
-import { buildLessonSpec } from "./lessonDuration";
+import { buildLessonSpec } from "./lessonBlueprint";
 import { generateValidLesson, LessonValidationError } from "./lessonGenerator";
 import { computePerformance } from "./performance";
 import { REVIEW_OFFSETS, selectReviewItems } from "./reviewSelection";
@@ -213,6 +213,8 @@ export const lessonEngineService = {
           orderIndex: index,
           title: section.title,
           content: {
+            ...(section.stage ? { stage: section.stage } : {}),
+            ...(section.pattern ? { pattern: section.pattern } : {}),
             ...(section.explanation ? { explanation: section.explanation } : {}),
             ...(section.examples ? { examples: section.examples } : {}),
             ...(section.vocabulary ? { vocabulary: section.vocabulary } : {}),

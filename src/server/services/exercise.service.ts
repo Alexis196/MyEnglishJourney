@@ -100,6 +100,15 @@ export const exerciseService = {
         evaluationStatus = result.isCorrect ? "auto_correct" : "auto_incorrect";
         break;
       }
+      case "word_ordering":
+      case "grammar_error_correction": {
+        // Closed answers: corrected deterministically against every accepted phrasing, no AI involved.
+        const result = validateFillInBlank(exercise.answer_key as unknown as ClosedTextAnswerKey, response.answer);
+        isCorrect = result.isCorrect;
+        score = result.score;
+        evaluationStatus = result.isCorrect ? "auto_correct" : "auto_incorrect";
+        break;
+      }
       case "translation_es_en":
       case "translation_en_es": {
         const result = validateTranslation(exercise.answer_key as unknown as ClosedTextAnswerKey, response.answer);
@@ -117,7 +126,12 @@ export const exerciseService = {
           const result = await aiRouter.generate(supabase, {
             activityType: "writing_feedback",
             systemPrompt: buildWritingFeedbackSystemPrompt(explanationLanguage),
-            userPrompt: buildWritingFeedbackUserPrompt({ exercisePrompt: exerciseContent.prompt, studentAnswer: response.answer }),
+            userPrompt: buildWritingFeedbackUserPrompt({
+              exercisePrompt: exerciseContent.prompt,
+              studentAnswer: response.answer,
+              level: profile.current_level,
+              minWords: (exercise.content as { minWords?: number }).minWords,
+            }),
             responseSchema: writingFeedbackSchema,
             userId,
           });

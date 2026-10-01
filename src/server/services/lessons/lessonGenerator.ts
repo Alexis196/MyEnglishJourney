@@ -5,9 +5,9 @@ import { env } from "../../config/env";
 import { logger } from "../../utils/logger";
 import { getCefrRules } from "./cefrRules";
 import type { LearningContext } from "./learningContext";
-import type { LessonSpec } from "./lessonDuration";
+import type { LessonSpec } from "./lessonBlueprint";
 import { buildLessonSystemPrompt, buildLessonUserPrompt } from "./lessonPrompt";
-import { allIssues, repairGeneratedLesson, validateGeneratedLesson } from "./lessonValidator";
+import { allIssues, blockingIssues, repairGeneratedLesson, validateGeneratedLesson } from "./lessonValidator";
 
 /**
  * Hard cap on model calls for ONE lesson: first try, one repair try with the problems listed, and (only when the
@@ -31,9 +31,11 @@ function maxTokensFor(spec: LessonSpec): number {
 }
 
 /**
- * Generates a lesson and only returns it when it has no HARD problems (missing sections, unusable exercises,
- * content the student did not choose, wrong language for the level...). Soft deviations — a few exercises more or
- * less, a slightly different length — are accepted and logged: they never justify spending another call.
+ * Generates a lesson and only returns it when it has no HARD problems (unusable exercises, content the student did
+ * not choose, wrong language for the level...) and no ESSENTIAL quality problems (no real production, an assessment
+ * that is mostly recognition, a missing grammar pattern, ignored progression or blueprint...). Either kind gets the
+ * repair attempt; if it still fails the lesson is NOT saved. Soft deviations — small differences in proportions or
+ * amounts — are accepted and logged: they never justify spending another call.
  */
 export async function generateValidLesson(params: {
   supabase: SupabaseClient;
@@ -65,12 +67,13 @@ export async function generateValidLesson(params: {
     const lesson = repairGeneratedLesson(normalizeGeneratedLesson(result.data), validation);
     const found = validateGeneratedLesson(lesson, validation);
 
-    if (found.hard.length === 0) {
+    const blocking = blockingIssues(found);
+    if (blocking.length === 0) {
       if (found.soft.length > 0) logger.info({ issues: found.soft, userId }, "Accepting lesson with minor deviations");
       return lesson;
     }
 
-    lastHard = found.hard;
+    lastHard = blocking;
     repairNotes = allIssues(found);
     logger.warn({ attempt, issues: repairNotes, userId }, "Generated lesson failed validation");
   }

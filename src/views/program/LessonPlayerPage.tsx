@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, ArrowLeft, Mic } from "lucide-react";
 import { useLesson, useUpdateLessonProgress } from "../../hooks/useLesson";
 import { CardSkeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -77,6 +78,14 @@ export function LessonPlayerPage() {
           <Button onClick={() => router.push("/program")} className="mt-2">
             Volver al programa
           </Button>
+          {/* A complementary invitation, never a requirement to finish the lesson. */}
+          <Link
+            href="/speaking"
+            className="mt-1 inline-flex items-center gap-1.5 text-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+          >
+            <Mic className="h-3.5 w-3.5" aria-hidden="true" />
+            ¿Querés practicar en voz alta? Probá el Speaking Lab
+          </Link>
         </Card>
       </motion.div>
     );

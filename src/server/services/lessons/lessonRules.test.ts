@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { CEFR_LEVELS } from "@myenglishjourney/shared";
 import { CEFR_RULES, describeCefrRules, getCefrRules } from "./cefrRules";
-import { buildLessonSpec, estimateLessonMinutes, DURATION_TOLERANCE, tierForMinutes, TIER_CONFIG } from "./lessonDuration";
+import { buildLessonSpec } from "./lessonBlueprint";
+import { DURATION_TOLERANCE, estimateLessonMinutes, tierForMinutes, TIER_CONFIG } from "./lessonDuration";
 import { allowsTechContext, allowsWorkContext, resolvePersonalization } from "./learningContext";
-import { allIssues, repairGeneratedLesson, validateGeneratedLesson } from "./lessonValidator";
-import { makeContext, makeLesson } from "./testFactories";
-
-const validate = (lesson: ReturnType<typeof makeLesson>, level: Parameters<typeof getCefrRules>[0], minutes: number, ctx = makeContext({ cefrLevel: level ?? "A1", minutesPerLesson: minutes })) => {
-  const spec = buildLessonSpec({ minutes, level: level ?? "A1", dayType: "lesson" });
-  return validateGeneratedLesson(lesson, { spec, rules: getCefrRules(level), context: ctx });
-};
+import { makeLesson } from "./testFactories";
 
 describe("CEFR rules", () => {
   it("get stricter sentence limits and more freedom as the level rises", () => {
@@ -26,10 +21,37 @@ describe("CEFR rules", () => {
     expect(CEFR_RULES.C1.instructionLanguage).toBe("english");
   });
 
+  it("uses the approved own-production ladder", () => {
+    const main = (level: (typeof CEFR_LEVELS)[number]) => CEFR_RULES[level].production.main;
+    expect(main("A1")).toEqual({ min: 8, max: 20 });
+    expect(main("A2")).toEqual({ min: 20, max: 50 });
+    expect(main("B1")).toEqual({ min: 50, max: 90 });
+    expect(main("B2")).toEqual({ min: 90, max: 150 });
+    expect(main("C1")).toEqual({ min: 140, max: 220 });
+    expect(main("C2")).toEqual({ min: 180, max: 280 });
+  });
+
+  it("production grows with the level and short answers always stay below the main task", () => {
+    let previousMax = 0;
+    for (const level of CEFR_LEVELS) {
+      const { main, short } = CEFR_RULES[level].production;
+      expect(main.max).toBeGreaterThan(previousMax);
+      expect(short.max).toBeLessThanOrEqual(main.min);
+      previousMax = main.max;
+    }
+  });
+
+  it("only A1/A2 require the grammar pattern and A1 keeps scaffolding", () => {
+    expect(CEFR_LEVELS.filter((level) => CEFR_RULES[level].requiresPattern)).toEqual(["A1", "A2"]);
+    expect(CEFR_RULES.A1.starters).toBe("always");
+    expect(CEFR_RULES.B1.starters).toBe("never");
+  });
+
   it("describes the level for the prompt", () => {
     const text = describeCefrRules(getCefrRules("A1"));
     expect(text).toContain("CEFR level: A1");
     expect(text).toContain("at most 8 words");
+    expect(text).toContain("2 to 4 simple sentences");
   });
 });
 
@@ -42,104 +64,134 @@ describe("session length", () => {
   });
 
   it("30 minutes means less practice than 60 or 90", () => {
-    const at = (minutes: number) => buildLessonSpec({ minutes, level: "B1", dayType: "lesson" });
+    const at = (minutes: number) => buildLessonSpec({ minutes, level: "A2", dayType: "lesson" });
     expect(at(30).exercises.max).toBeLessThan(at(60).exercises.min);
     expect(at(60).exercises.max).toBeLessThan(at(90).exercises.min);
     expect(at(30).reviewExercises).toBeLessThan(at(90).reviewExercises);
     expect(at(30).vocabulary.max).toBeLessThan(at(90).vocabulary.max);
   });
 
-  it("caps vocabulary and writing by level whatever the minutes", () => {
+  it("caps vocabulary and writing tasks by level whatever the minutes", () => {
     const a1 = buildLessonSpec({ minutes: 90, level: "A1", dayType: "lesson" });
     expect(a1.vocabulary.max).toBe(CEFR_RULES.A1.maxNewWords);
-    expect(a1.freeWriting.max).toBe(CEFR_RULES.A1.maxFreeWriting);
+    expect(a1.freeWriting.max).toBeLessThanOrEqual(CEFR_RULES.A1.maxFreeWriting);
+    expect(a1.production.main).toBeGreaterThanOrEqual(1);
   });
 
-  it("review and assessment days change the required structure", () => {
-    expect(buildLessonSpec({ minutes: 60, level: "A2", dayType: "assessment" }).requiredSections).toContain("final_assessment");
-    expect(buildLessonSpec({ minutes: 60, level: "A2", dayType: "review" }).requiredSections).not.toContain("grammar");
+  it("the writing target grows with the session but stays inside the level's range", () => {
+    for (const level of CEFR_LEVELS) {
+      const { main } = CEFR_RULES[level].production;
+      const words = [30, 45, 60, 90].map((minutes) => buildLessonSpec({ minutes, level, dayType: "lesson" }).productionWords.main);
+      expect(words).toEqual([...words].sort((a, b) => a - b));
+      expect(words[0]).toBeGreaterThanOrEqual(main.min);
+      expect(words.at(-1)).toBeLessThanOrEqual(main.max);
+    }
+    // A1 prioritises a few correct sentences over volume: even 90 minutes asks for a short text.
+    expect(buildLessonSpec({ minutes: 90, level: "A1", dayType: "lesson" }).productionWords.main).toBeLessThanOrEqual(20);
   });
 
-  it("a lesson built to each tier's midpoint lands inside the duration tolerance", () => {
-    for (const minutes of [30, 45, 60, 90]) {
-      const spec = buildLessonSpec({ minutes, level: "B1", dayType: "lesson" });
-      const estimate = estimateLessonMinutes(makeLesson(spec, "B1"));
-      expect(estimate, `${minutes} min`).toBeGreaterThanOrEqual(minutes * DURATION_TOLERANCE.min);
-      expect(estimate, `${minutes} min`).toBeLessThanOrEqual(minutes * DURATION_TOLERANCE.max);
+  it("a lesson built to each blueprint lands inside the duration tolerance, at every level", () => {
+    for (const level of CEFR_LEVELS) {
+      for (const minutes of [30, 45, 60, 90]) {
+        const spec = buildLessonSpec({ minutes, level, dayType: "lesson" });
+        const estimate = estimateLessonMinutes(makeLesson(spec));
+        expect(estimate, `${level} ${minutes} min`).toBeGreaterThanOrEqual(minutes * DURATION_TOLERANCE.min);
+        expect(estimate, `${level} ${minutes} min`).toBeLessThanOrEqual(minutes * DURATION_TOLERANCE.max);
+      }
     }
     expect(Object.keys(TIER_CONFIG)).toHaveLength(4);
   });
+
+  it("minutes are interaction time: a long session adds practice, not longer explanations", () => {
+    const short = buildLessonSpec({ minutes: 30, level: "A2", dayType: "lesson" });
+    const long = buildLessonSpec({ minutes: 90, level: "A2", dayType: "lesson" });
+    expect(long.exercises.min).toBeGreaterThan(short.exercises.max);
+    const explanations = (spec: typeof short) => spec.blueprint.filter((section) => section.explanation).length;
+    expect(explanations(long)).toBe(explanations(short));
+  });
 });
 
-describe("lesson validation", () => {
-  it("accepts a well-formed A1 lesson", () => {
-    const spec = buildLessonSpec({ minutes: 30, level: "A1", dayType: "lesson" });
-    expect(allIssues(validate(makeLesson(spec, "A1"), "A1", 30))).toEqual([]);
+describe("lesson blueprint", () => {
+  it("keeps the six-section structure and walks recognition -> guided -> construction -> production -> assessment", () => {
+    const spec = buildLessonSpec({ minutes: 60, level: "A2", dayType: "lesson" });
+    expect(spec.blueprint.map((section) => section.key)).toEqual([
+      "review",
+      "vocabulary",
+      "grammar",
+      "construction",
+      "production",
+      "assessment",
+    ]);
+    expect(spec.blueprint.map((section) => section.stage)).toEqual([
+      "recognition",
+      "recognition",
+      "guided",
+      "construction",
+      "production",
+      "assessment",
+    ]);
   });
 
-  it("flags too-long English sentences for A1 but accepts them for B2", () => {
-    const spec = buildLessonSpec({ minutes: 30, level: "A1", dayType: "lesson" });
-    const lesson = makeLesson(spec, "A1");
-    const long = "Although it was raining heavily yesterday evening, my friends and I decided to walk to the old cinema downtown.";
-    for (const section of lesson.sections) if (section.examples) section.examples = [long, long, long];
-
-    expect(validate(lesson, "A1", 30).hard.join(" ")).toMatch(/at most 8 words/);
-
-    const specB2 = buildLessonSpec({ minutes: 30, level: "B2", dayType: "lesson" });
-    const b2 = makeLesson(specB2, "B2");
-    for (const section of b2.sections) if (section.examples) section.examples = [long];
-    expect(allIssues(validate(b2, "B2", 30)).join(" ")).not.toMatch(/words per|at most \d+ words/);
-  });
-
-  it("requires Spanish explanations at A1", () => {
-    const spec = buildLessonSpec({ minutes: 30, level: "A1", dayType: "lesson" });
-    const lesson = makeLesson(spec, "A1");
-    for (const section of lesson.sections) {
-      if (section.explanation) section.explanation = "We use the verb to be to say who a person is and where they come from today.";
+  it("never plans a Speaking or Listening section (no oral interaction in the lesson)", () => {
+    for (const level of CEFR_LEVELS) {
+      for (const dayType of ["lesson", "review", "assessment"] as const) {
+        const spec = buildLessonSpec({ minutes: 60, level, dayType });
+        expect(spec.allowedSections).not.toContain("speaking");
+        expect(spec.blueprint.map((section) => section.sectionType)).not.toContain("speaking" as never);
+      }
     }
-    expect(validate(lesson, "A1", 30).hard.join(" ")).toMatch(/Spanish/);
   });
 
-  it("rejects free writing that is too demanding for the level", () => {
-    const spec = buildLessonSpec({ minutes: 60, level: "A1", dayType: "lesson" });
-    const lesson = makeLesson(spec, "A1");
-    for (const section of lesson.sections) for (const e of section.exercises) if (e.exerciseType === "free_writing") e.minWords = 50;
-    expect(allIssues(validate(lesson, "A1", 60)).join(" ")).toMatch(/minWords/);
+  it("every lesson plans real production and a final assessment with little multiple choice", () => {
+    for (const level of CEFR_LEVELS) {
+      const spec = buildLessonSpec({ minutes: 45, level, dayType: "lesson" });
+      const production = spec.blueprint.find((section) => section.key === "production");
+      const assessment = spec.blueprint.find((section) => section.key === "assessment");
+      expect(production?.production?.main).toBeGreaterThanOrEqual(1);
+      expect(assessment!.maxMultipleChoice).toBeLessThanOrEqual(Math.floor(assessment!.count / 3));
+      expect(assessment!.minConstructive).toBeGreaterThanOrEqual(1);
+    }
   });
 
-  it("does not let programming content through unless the student chose it", () => {
-    const spec = buildLessonSpec({ minutes: 30, level: "A2", dayType: "lesson" });
-    const lesson = makeLesson(spec, "A2");
-    lesson.sections[1]!.examples = ["I am a software developer."];
-    const without = makeContext({ cefrLevel: "A2", interests: ["music"] });
-    expect(validate(lesson, "A2", 30, without).hard.join(" ")).toMatch(/programming|software/i);
-
-    const withTech = makeContext({ cefrLevel: "A2", interests: ["technology"] });
-    expect(validate(lesson, "A2", 30, withTech).hard.join(" ")).not.toMatch(/programming|software/i);
+  it("difficulty windows rise from section to section", () => {
+    const spec = buildLessonSpec({ minutes: 60, level: "B1", dayType: "lesson" });
+    const first = spec.blueprint[0]!.difficulties;
+    const last = spec.blueprint.at(-1)!.difficulties;
+    expect(first).toContain("easy");
+    expect(last).not.toContain("easy");
+    expect(spec.blueprint.find((section) => section.key === "construction")!.maxMultipleChoice).toBe(0);
   });
 
-  it("does not let workplace content through without a profession or work goal", () => {
-    const spec = buildLessonSpec({ minutes: 30, level: "A2", dayType: "lesson" });
-    const lesson = makeLesson(spec, "A2");
-    lesson.sections[1]!.examples = ["My boss has a meeting with the manager."];
-    expect(validate(lesson, "A2", 30, makeContext({ cefrLevel: "A2" })).hard.join(" ")).toMatch(/workplace/);
-    expect(validate(lesson, "A2", 30, makeContext({ cefrLevel: "A2", profession: "nurse" })).hard.join(" ")).not.toMatch(/workplace/);
+  it("requires the visual pattern for A1/A2 grammar only", () => {
+    const grammar = (level: (typeof CEFR_LEVELS)[number]) =>
+      buildLessonSpec({ minutes: 45, level, dayType: "lesson" }).blueprint.find((section) => section.key === "grammar")!;
+    expect(grammar("A1").requiresPattern).toBe(true);
+    expect(grammar("A2").requiresPattern).toBe(true);
+    expect(grammar("B1").requiresPattern).toBe(false);
   });
 
-  it("flags a lesson that is far shorter than the session", () => {
-    const spec = buildLessonSpec({ minutes: 90, level: "B1", dayType: "lesson" });
-    const small = makeLesson(buildLessonSpec({ minutes: 30, level: "B1", dayType: "lesson" }), "B1");
-    const result = validate(small, "B1", 90, makeContext({ cefrLevel: "B1", minutesPerLesson: 90 }));
-    expect(allIssues(result).join(" ")).toMatch(/exercises|minutes/);
-    expect(spec.tier).toBe(90);
+  it("adds a second building round only in 90-minute sessions", () => {
+    const keys = (minutes: number) => buildLessonSpec({ minutes, level: "B1", dayType: "lesson" }).blueprint.map((s) => s.key);
+    expect(keys(60)).not.toContain("construction_2");
+    expect(keys(90)).toContain("construction_2");
   });
 
-  it("repairs unusable exercises deterministically", () => {
-    const spec = buildLessonSpec({ minutes: 30, level: "A1", dayType: "lesson" });
-    const lesson = makeLesson(spec, "A1");
-    lesson.sections[0]!.exercises.push({ exerciseType: "multiple_choice", prompt: "bad", options: ["a", "b", "c"], correctOptionIndex: 9 });
-    const repaired = repairGeneratedLesson(lesson, { spec, rules: getCefrRules("A1"), context: makeContext() });
-    expect(repaired.sections[0]!.exercises.some((e) => e.prompt === "bad")).toBe(false);
+  it("review and assessment days reshape the lesson (no new grammar/vocabulary)", () => {
+    const review = buildLessonSpec({ minutes: 60, level: "A2", dayType: "review" });
+    const assessment = buildLessonSpec({ minutes: 60, level: "A2", dayType: "assessment" });
+    expect(review.blueprint.map((s) => s.key)).toEqual(["review", "construction", "production", "assessment"]);
+    expect(review.vocabulary.max).toBe(0);
+    const weight = (spec: typeof review) => spec.blueprint.find((s) => s.key === "assessment")!.count;
+    expect(weight(assessment)).toBeGreaterThan(weight(review));
+  });
+
+  it("scales the number of writing tasks (AI evaluations) within the level's cap", () => {
+    for (const level of CEFR_LEVELS) {
+      for (const minutes of [30, 90]) {
+        const spec = buildLessonSpec({ minutes, level, dayType: "lesson" });
+        expect(spec.freeWriting.max).toBeLessThanOrEqual(CEFR_RULES[level].maxFreeWriting);
+      }
+    }
   });
 });
 

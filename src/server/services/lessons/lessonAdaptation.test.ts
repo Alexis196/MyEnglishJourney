@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildPlanGenerationSystemPrompt, buildPlanGenerationUserPrompt } from "../ai/prompts/planGeneration.prompt";
 import { buildSpeakingAnalysisSystemPrompt } from "../ai/prompts/speakingAnalysis.prompt";
 import { buildWritingFeedbackSystemPrompt, TUTOR_PERSONA } from "../ai/prompts/systemPrompts";
-import { buildLessonSpec } from "./lessonDuration";
+import { buildLessonSpec } from "./lessonBlueprint";
 import { buildLessonSystemPrompt, buildLessonUserPrompt } from "./lessonPrompt";
 import { computePerformance, describePerformance, type AttemptSample } from "./performance";
 import { describeReviewItems, selectReviewItems, type HistoricAttempt, type HistoricExercise } from "./reviewSelection";

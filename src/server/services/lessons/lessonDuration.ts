@@ -1,27 +1,26 @@
-import type { CefrLevel, ExerciseType, PlanDayType } from "@myenglishjourney/shared";
-import { getCefrRules } from "./cefrRules";
+import type { ExerciseType } from "@myenglishjourney/shared";
 
 /**
- * Session length drives the amount of PRACTICE (exercises, vocabulary, writing, review), not the amount of
- * generated prose: 60 minutes means ~60 minutes of student interaction.
+ * Session length drives the amount of PRACTICE the student does, not the amount of generated text: 60 minutes
+ * means roughly 60 minutes of student interaction. The time model below is what the blueprint and the
+ * validator both use, so they always agree.
  */
 export const SESSION_TIERS = [30, 45, 60, 90] as const;
 export type SessionTier = (typeof SESSION_TIERS)[number];
 
 interface TierConfig {
-  sections: { min: number; max: number };
-  exercises: { min: number; max: number };
   vocabulary: { min: number; max: number };
-  freeWriting: { min: number; max: number };
-  /** Exercises dedicated to reviewing earlier material (when there is history to review). */
+  /** Exercises dedicated to reviewing earlier material (lesson days with history or a warm-up). */
   review: number;
+  /** Own-production tasks: short answers + main task. Every one is AI-evaluated, hence kept small. */
+  production: { short: number; main: number };
 }
 
 export const TIER_CONFIG: Record<SessionTier, TierConfig> = {
-  30: { sections: { min: 4, max: 6 }, exercises: { min: 10, max: 14 }, vocabulary: { min: 4, max: 6 }, freeWriting: { min: 0, max: 1 }, review: 3 },
-  45: { sections: { min: 5, max: 7 }, exercises: { min: 15, max: 20 }, vocabulary: { min: 6, max: 8 }, freeWriting: { min: 0, max: 1 }, review: 4 },
-  60: { sections: { min: 6, max: 8 }, exercises: { min: 20, max: 26 }, vocabulary: { min: 8, max: 12 }, freeWriting: { min: 1, max: 2 }, review: 5 },
-  90: { sections: { min: 7, max: 9 }, exercises: { min: 30, max: 38 }, vocabulary: { min: 12, max: 16 }, freeWriting: { min: 1, max: 3 }, review: 7 },
+  30: { vocabulary: { min: 4, max: 6 }, review: 3, production: { short: 1, main: 1 } },
+  45: { vocabulary: { min: 6, max: 8 }, review: 4, production: { short: 1, main: 1 } },
+  60: { vocabulary: { min: 8, max: 12 }, review: 5, production: { short: 2, main: 1 } },
+  90: { vocabulary: { min: 12, max: 16 }, review: 7, production: { short: 2, main: 2 } },
 };
 
 /** Snap any configured minutes (10-240) to the closest supported tier. */
@@ -33,73 +32,32 @@ export function tierForMinutes(minutes: number): SessionTier {
   return best;
 }
 
-export interface LessonSpec {
-  tier: SessionTier;
-  minutes: number;
-  sections: { min: number; max: number };
-  exercises: { min: number; max: number };
-  vocabulary: { min: number; max: number };
-  freeWriting: { min: number; max: number };
-  /** Exercises that must live in the "review" section (0 when the lesson has no review section). */
-  reviewExercises: number;
-  requiredSections: string[];
-  allowedSections: string[];
-  dayType: PlanDayType;
-}
-
-const ALLOWED_SECTIONS = ["review", "vocabulary", "grammar", "interactive", "speaking", "final_assessment"];
-
-export function buildLessonSpec(params: { minutes: number; level: CefrLevel; dayType: PlanDayType }): LessonSpec {
-  const tier = tierForMinutes(params.minutes);
-  const config = TIER_CONFIG[tier];
-  const rules = getCefrRules(params.level);
-
-  const vocabMax = Math.min(config.vocabulary.max, rules.maxNewWords);
-  const vocabMin = Math.min(config.vocabulary.min, vocabMax);
-  const writingMax = Math.min(config.freeWriting.max, rules.maxFreeWriting);
-  const writingMin = Math.min(config.freeWriting.min, writingMax);
-
-  const isReviewDay = params.dayType === "review";
-  const isAssessmentDay = params.dayType === "assessment";
-
-  const requiredSections = isAssessmentDay
-    ? ["review", "interactive", "final_assessment"]
-    : isReviewDay
-      ? ["review", "interactive"]
-      : ["review", "vocabulary", "grammar", "interactive"];
-  if (tier >= 45 && !isAssessmentDay && !isReviewDay && writingMax > 0) requiredSections.push("speaking");
-
-  return {
-    tier,
-    minutes: params.minutes,
-    sections: config.sections,
-    exercises: config.exercises,
-    // Review and assessment days concentrate on practice; new vocabulary is optional there.
-    vocabulary: isReviewDay || isAssessmentDay ? { min: 0, max: Math.min(vocabMax, 4) } : { min: vocabMin, max: vocabMax },
-    freeWriting: { min: isReviewDay || isAssessmentDay ? 0 : writingMin, max: writingMax },
-    reviewExercises: isReviewDay ? Math.ceil(config.exercises.min * 0.5) : config.review,
-    requiredSections,
-    allowedSections: ALLOWED_SECTIONS,
-    dayType: params.dayType,
-  };
-}
-
-/** Rough time a student needs per task, in seconds (reading + thinking + typing). */
-const EXERCISE_SECONDS: Record<string, number> = {
-  multiple_choice: 60,
-  fill_in_blank: 75,
-  translation_es_en: 120,
-  translation_en_es: 120,
-  free_writing: 420,
+/** Rough time a student needs per task, in seconds (reading + thinking + typing/tapping). */
+export const EXERCISE_SECONDS: Record<string, number> = {
+  multiple_choice: 45,
+  fill_in_blank: 60,
+  word_ordering: 90,
+  grammar_error_correction: 90,
+  translation_es_en: 100,
+  translation_en_es: 100,
 };
-const VOCAB_ITEM_SECONDS = 45;
-const EXPLANATION_SECONDS = 120;
+/** Average of the non-production exercises, used to turn a time budget into an exercise count. */
+export const AVG_PRACTICE_SECONDS = 75;
+export const VOCAB_ITEM_SECONDS = 30;
+export const EXPLANATION_SECONDS = 60;
+export const PATTERN_SECONDS = 30;
+
+/** Writing takes a fixed warm-up plus time per requested word. */
+export function productionSeconds(minWords: number | undefined): number {
+  return 45 + 8 * (minWords ?? 10);
+}
 
 export interface EstimableLesson {
   sections: Array<{
     explanation?: string | undefined;
+    pattern?: unknown;
     vocabulary?: unknown[] | undefined;
-    exercises?: Array<{ exerciseType: ExerciseType | string }> | undefined;
+    exercises?: Array<{ exerciseType: ExerciseType | string; minWords?: number | undefined }> | undefined;
   }>;
 }
 
@@ -107,11 +65,17 @@ export function estimateLessonMinutes(lesson: EstimableLesson): number {
   let seconds = 0;
   for (const section of lesson.sections) {
     if (section.explanation) seconds += EXPLANATION_SECONDS;
+    if (section.pattern) seconds += PATTERN_SECONDS;
     seconds += (section.vocabulary?.length ?? 0) * VOCAB_ITEM_SECONDS;
-    for (const exercise of section.exercises ?? []) seconds += EXERCISE_SECONDS[exercise.exerciseType] ?? 75;
+    for (const exercise of section.exercises ?? []) {
+      seconds +=
+        exercise.exerciseType === "free_writing"
+          ? productionSeconds(exercise.minWords)
+          : (EXERCISE_SECONDS[exercise.exerciseType] ?? AVG_PRACTICE_SECONDS);
+    }
   }
   return Math.round(seconds / 60);
 }
 
 /** Accepted band for the estimated time relative to the target. */
-export const DURATION_TOLERANCE = { min: 0.55, max: 1.45 } as const;
+export const DURATION_TOLERANCE = { min: 0.55, max: 1.5 } as const;

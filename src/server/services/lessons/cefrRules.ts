@@ -12,10 +12,22 @@ export interface CefrRules {
   maxWordsPerSentence: number;
   /** Cap on new vocabulary items in one lesson, whatever the session length. */
   maxNewWords: number;
-  /** Allowed range of `minWords` for free-writing exercises. */
-  freeWritingMinWords: { min: number; max: number };
-  /** Max free-writing exercises in one lesson (open writing is hard at the lower levels). */
+  /**
+   * Own-production ladder, in words. `main` is the lesson's culminating writing task, `short` the brief answers
+   * that lead to it. These are ranges for the task at its pedagogical moment, not quotas: at A1 what matters is
+   * a few correct simple sentences, not reaching the top of the range.
+   */
+  production: { main: { min: number; max: number }; short: { min: number; max: number } };
+  /** Wording of the main task for the prompt, e.g. "2 to 4 simple sentences". */
+  mainTaskShape: string;
+  /** Sentence starters offered with writing tasks: always, optional or never. */
+  starters: "always" | "optional" | "never";
+  /** Max free-writing (AI-evaluated) exercises in one lesson: each costs one evaluation. */
   maxFreeWriting: number;
+  /** Max share of pure multiple-choice recognition in the whole lesson before it counts as a flaw. */
+  maxRecognitionShare: number;
+  /** A grammar point must come with a visual pattern before it is evaluated. */
+  requiresPattern: boolean;
   /** Exercise types the model may use. */
   exerciseTypes: readonly ExerciseType[];
   /** 0..1: minimum share of Spanish function words expected in explanations (0 = not checked). */
@@ -28,8 +40,15 @@ export interface CefrRules {
   support: string;
 }
 
-const EASY_TYPES = ["multiple_choice", "fill_in_blank", "translation_es_en", "translation_en_es"] as const;
-const ALL_TYPES = [...EASY_TYPES, "free_writing"] as const;
+const ALL_TYPES = [
+  "multiple_choice",
+  "fill_in_blank",
+  "translation_es_en",
+  "translation_en_es",
+  "word_ordering",
+  "grammar_error_correction",
+  "free_writing",
+] as const;
 
 export const CEFR_RULES: Record<CefrLevel, CefrRules> = {
   A1: {
@@ -37,9 +56,13 @@ export const CEFR_RULES: Record<CefrLevel, CefrRules> = {
     instructionLanguage: "spanish",
     maxWordsPerSentence: 8,
     maxNewWords: 8,
-    freeWritingMinWords: { min: 5, max: 10 },
-    maxFreeWriting: 1,
-    exerciseTypes: EASY_TYPES,
+    production: { main: { min: 8, max: 20 }, short: { min: 3, max: 8 } },
+    mainTaskShape: "2 to 4 simple sentences about themselves, with sentence starters",
+    starters: "always",
+    maxFreeWriting: 2,
+    maxRecognitionShare: 0.45,
+    requiresPattern: true,
+    exerciseTypes: ALL_TYPES,
     minSpanishShareInExplanations: 0.2,
     grammar:
       "Only present simple of 'to be' and a few very common verbs, basic articles, this/that, there is/are, simple questions (what/where/who). No past tenses, no perfect tenses, no conditionals, no phrasal verbs.",
@@ -56,9 +79,13 @@ export const CEFR_RULES: Record<CefrLevel, CefrRules> = {
     instructionLanguage: "mostly_spanish",
     maxWordsPerSentence: 12,
     maxNewWords: 10,
-    freeWritingMinWords: { min: 10, max: 25 },
-    maxFreeWriting: 1,
-    exerciseTypes: EASY_TYPES,
+    production: { main: { min: 20, max: 50 }, short: { min: 6, max: 18 } },
+    mainTaskShape: "a short connected paragraph of 3 to 5 sentences",
+    starters: "optional",
+    maxFreeWriting: 3,
+    maxRecognitionShare: 0.4,
+    requiresPattern: true,
+    exerciseTypes: ALL_TYPES,
     minSpanishShareInExplanations: 0.15,
     grammar:
       "Present simple and continuous, past simple (regular and common irregular verbs), going to, can/could, comparatives, countable/uncountable with some/any, basic prepositions and connectors (and, but, because).",
@@ -73,8 +100,12 @@ export const CEFR_RULES: Record<CefrLevel, CefrRules> = {
     instructionLanguage: "mixed",
     maxWordsPerSentence: 18,
     maxNewWords: 12,
-    freeWritingMinWords: { min: 25, max: 60 },
-    maxFreeWriting: 2,
+    production: { main: { min: 50, max: 90 }, short: { min: 15, max: 35 } },
+    mainTaskShape: "an open answer or a short paragraph / brief dialogue",
+    starters: "never",
+    maxFreeWriting: 3,
+    maxRecognitionShare: 0.35,
+    requiresPattern: false,
     exerciseTypes: ALL_TYPES,
     minSpanishShareInExplanations: 0,
     grammar:
@@ -90,8 +121,12 @@ export const CEFR_RULES: Record<CefrLevel, CefrRules> = {
     instructionLanguage: "mostly_english",
     maxWordsPerSentence: 24,
     maxNewWords: 14,
-    freeWritingMinWords: { min: 50, max: 100 },
-    maxFreeWriting: 2,
+    production: { main: { min: 90, max: 150 }, short: { min: 30, max: 60 } },
+    mainTaskShape: "an argued text giving an opinion with reasons and examples",
+    starters: "never",
+    maxFreeWriting: 3,
+    maxRecognitionShare: 0.3,
+    requiresPattern: false,
     exerciseTypes: ALL_TYPES,
     minSpanishShareInExplanations: 0,
     grammar:
@@ -107,8 +142,12 @@ export const CEFR_RULES: Record<CefrLevel, CefrRules> = {
     instructionLanguage: "english",
     maxWordsPerSentence: 30,
     maxNewWords: 16,
-    freeWritingMinWords: { min: 80, max: 150 },
+    production: { main: { min: 140, max: 220 }, short: { min: 50, max: 100 } },
+    mainTaskShape: "a structured text with a clear line of argument and appropriate register",
+    starters: "never",
     maxFreeWriting: 3,
+    maxRecognitionShare: 0.3,
+    requiresPattern: false,
     exerciseTypes: ALL_TYPES,
     minSpanishShareInExplanations: 0,
     grammar:
@@ -124,8 +163,12 @@ export const CEFR_RULES: Record<CefrLevel, CefrRules> = {
     instructionLanguage: "english",
     maxWordsPerSentence: 36,
     maxNewWords: 16,
-    freeWritingMinWords: { min: 100, max: 200 },
+    production: { main: { min: 180, max: 280 }, short: { min: 70, max: 130 } },
+    mainTaskShape: "a nuanced, stylistically varied text",
+    starters: "never",
     maxFreeWriting: 3,
+    maxRecognitionShare: 0.3,
+    requiresPattern: false,
     exerciseTypes: ALL_TYPES,
     minSpanishShareInExplanations: 0,
     grammar: "Full range with precision: subtle tense/aspect choices, stylistic variation, register shifts, rare structures.",
@@ -158,8 +201,7 @@ export function describeCefrRules(rules: CefrRules): string {
     `- Vocabulary: ${rules.vocabulary}`,
     `- Sentence length: at most ${rules.maxWordsPerSentence} words per English sentence. ${rules.texts}`,
     `- New words per lesson: at most ${rules.maxNewWords}.`,
-    `- Free-writing tasks: at most ${rules.maxFreeWriting}; "minWords" between ${rules.freeWritingMinWords.min} and ${rules.freeWritingMinWords.max}.`,
-    `- Speaking tasks: ${rules.speaking}`,
+    `- Own production: main task = ${rules.mainTaskShape} (${rules.production.main.min}-${rules.production.main.max} words); short answers ${rules.production.short.min}-${rules.production.short.max} words. At most ${rules.maxFreeWriting} free-writing tasks per lesson.`,
     `- Listening difficulty (for future audio tasks): ${rules.listening}`,
     `- Level of help: ${rules.support}`,
   ].join("\n");

@@ -1,9 +1,25 @@
 import { z } from "zod";
-import { CEFR_LEVELS } from "@myenglishjourney/shared";
+import { CEFR_LEVELS, EXERCISE_DIFFICULTIES, LESSON_STAGES, grammarPatternSchema } from "@myenglishjourney/shared";
 
 export const aiExerciseSchema = z.object({
-  exerciseType: z.enum(["multiple_choice", "fill_in_blank", "translation_es_en", "translation_en_es", "free_writing"]),
+  exerciseType: z.enum([
+    "multiple_choice",
+    "fill_in_blank",
+    "translation_es_en",
+    "translation_en_es",
+    "free_writing",
+    "word_ordering",
+    "grammar_error_correction",
+  ]),
+  /** easy / medium / hard relative to the lesson; filled in from the blueprint when the model omits it. */
+  difficulty: z.enum(EXERCISE_DIFFICULTIES).optional(),
   prompt: z.string().optional(),
+  /** word_ordering: the words, in scrambled order. */
+  words: z.array(z.string()).optional(),
+  /** grammar_error_correction: the sentence that contains the mistake. */
+  sentenceWithError: z.string().optional(),
+  /** free_writing: sentence openers offered as help. */
+  starters: z.array(z.string()).optional(),
   options: z.array(z.string()).optional(),
   correctOptionIndex: z.number().int().optional(),
   sourceText: z.string().optional(),
@@ -21,7 +37,9 @@ const aiVocabularyItemSchema = z.object({
 export const aiSectionSchema = z.object({
   sectionType: z.enum(["review", "vocabulary", "grammar", "interactive", "listening", "speaking", "final_assessment"]),
   title: z.string(),
+  stage: z.enum(LESSON_STAGES).optional(),
   explanation: z.string().optional(),
+  pattern: grammarPatternSchema.optional(),
   examples: z.array(z.string()).optional(),
   vocabulary: z.array(aiVocabularyItemSchema).optional(),
   exercises: z.array(aiExerciseSchema).default([]),

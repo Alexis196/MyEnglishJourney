@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlanDayRow } from "@myenglishjourney/shared";
-import { buildLessonSpec } from "./lessonDuration";
+import { buildLessonSpec } from "./lessonBlueprint";
 import { makeLesson } from "./testFactories";
 
 const env = vi.hoisted(() => ({ LESSON_GENERATIONS_PER_DAY: 10, LESSON_PREFETCH_NEXT: true, AI_OPENAI_FALLBACK_ENABLED: true }));
@@ -111,9 +111,9 @@ function makeDay(overrides: Partial<PlanDayRow> = {}): PlanDayRow {
 }
 
 const spec30 = () => buildLessonSpec({ minutes: 30, level: "A1", dayType: "lesson" });
-const goodLesson = () => ({ data: makeLesson(spec30(), "A1") });
+const goodLesson = () => ({ data: makeLesson(spec30()) });
 const techLesson = () => {
-  const lesson = makeLesson(spec30(), "A1");
+  const lesson = makeLesson(spec30());
   lesson.sections[1]!.examples = ["I am a software developer."];
   return { data: lesson };
 };
@@ -263,6 +263,83 @@ describe("lessonEngineService.ensureLesson", () => {
     expect(db.saved.lessons).toHaveLength(0);
   });
 
+  describe("pedagogical quality", () => {
+    const noProduction = () => {
+      const spec = spec30();
+      const lesson = makeLesson(spec);
+      lesson.sections[spec.blueprint.findIndex((section) => section.key === "production")]!.exercises = [];
+      return { data: lesson };
+    };
+    const assessmentMostlyChoice = () => {
+      const spec = spec30();
+      const lesson = makeLesson(spec);
+      const assessment = lesson.sections.at(-1)!;
+      assessment.exercises = assessment.exercises.map((exercise, i) => ({
+        exerciseType: "multiple_choice" as const,
+        difficulty: exercise.difficulty,
+        prompt: `Pick ${i}`,
+        options: ["a", "b", "c"],
+        correctOptionIndex: 0,
+      }));
+      return { data: lesson };
+    };
+
+    it("repairs an essential quality problem with one more attempt, telling the model what to fix", async () => {
+      env.AI_OPENAI_FALLBACK_ENABLED = false;
+      ai.generate.mockResolvedValueOnce(noProduction()).mockResolvedValueOnce(goodLesson());
+      const result = await lessonEngineService.ensureLesson(supabase, USER, "day-2");
+      expect(result.status).toBe("ready");
+      expect(ai.generate).toHaveBeenCalledTimes(2);
+      expect(ai.generate.mock.calls[1]![1].userPrompt).toMatch(/main writing task/);
+    });
+
+    it("leaves the day failed when essential quality still fails after the repair attempt", async () => {
+      env.AI_OPENAI_FALLBACK_ENABLED = false;
+      ai.generate.mockResolvedValue(noProduction());
+      const result = await lessonEngineService.ensureLesson(supabase, USER, "day-2");
+      expect(ai.generate).toHaveBeenCalledTimes(2); // never more than agreed while OpenAI is off
+      expect(result.status).toBe("failed");
+      expect(db.day.generation_status).toBe("failed");
+      expect(db.day.lesson_id).toBeNull();
+      expect(db.saved.lessons).toHaveLength(0);
+
+      // and the student can try again later
+      ai.generate.mockReset();
+      ai.generate.mockResolvedValueOnce(goodLesson());
+      await expect(lessonEngineService.ensureLesson(supabase, USER, "day-2")).resolves.toMatchObject({ status: "ready" });
+    });
+
+    it("does not save a final assessment that is mostly recognition", async () => {
+      env.AI_OPENAI_FALLBACK_ENABLED = false;
+      ai.generate.mockResolvedValue(assessmentMostlyChoice());
+      const result = await lessonEngineService.ensureLesson(supabase, USER, "day-2");
+      expect(result.status).toBe("failed");
+      expect(db.saved.lessons).toHaveLength(0);
+    });
+
+    it("accepts desirable-quality deviations without spending another call", async () => {
+      const spec = spec30();
+      const lesson = makeLesson(spec);
+      const construction = lesson.sections[spec.blueprint.findIndex((section) => section.key === "construction")]!;
+      construction.exercises.push({ exerciseType: "word_ordering", words: ["Zed", "likes", "jam"], acceptedAnswers: ["Zed likes jam"], difficulty: "hard" });
+      ai.generate.mockResolvedValue({ data: lesson });
+      const result = await lessonEngineService.ensureLesson(supabase, USER, "day-2");
+      expect(result.status).toBe("ready");
+      expect(ai.generate).toHaveBeenCalledTimes(1);
+    });
+
+    it("saves the stage, pattern and difficulty with the lesson", async () => {
+      const lesson = goodLesson();
+      ai.generate.mockResolvedValue(lesson);
+      const { lessonSectionRepository } = await import("../../repositories/lessonSection.repository");
+      await lessonEngineService.ensureLesson(supabase, USER, "day-2");
+      const rows = vi.mocked(lessonSectionRepository.bulkInsert).mock.calls[0]![1] as Array<{ content: { stage?: string; pattern?: unknown } }>;
+      expect(rows.map((row) => row.content.stage)).toEqual(spec30().blueprint.map((section) => section.stage));
+      expect(rows.some((row) => row.content.pattern)).toBe(true);
+      expect(rows.map((row) => row.content.stage)).not.toContain(undefined);
+    });
+  });
+
   it("marks the day failed when every provider is down, and lets the student retry", async () => {
     ai.generate.mockRejectedValueOnce(new AIProviderFailureError(undefined));
     const failed = await lessonEngineService.ensureLesson(supabase, USER, "day-2");
@@ -328,7 +405,7 @@ describe("lessonEngineService.ensureLesson", () => {
   it("uses the session length and level of the student", async () => {
     db.profile = { current_level: "B1", explanation_language: "es" };
     db.plan.personalization = { interests: [], focusAreas: [], minutesPerSession: 60 };
-    ai.generate.mockResolvedValue({ data: makeLesson(buildLessonSpec({ minutes: 60, level: "B1", dayType: "lesson" }), "B1") });
+    ai.generate.mockResolvedValue({ data: makeLesson(buildLessonSpec({ minutes: 60, level: "B1", dayType: "lesson" })) });
     const result = await lessonEngineService.ensureLesson(supabase, USER, "day-2");
     expect(result.status).toBe("ready");
     const prompt = ai.generate.mock.calls[0]![1].userPrompt as string;

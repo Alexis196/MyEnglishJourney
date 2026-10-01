@@ -8,17 +8,13 @@ import { MultipleChoiceExercise } from "./MultipleChoiceExercise";
 import { FillInBlankExercise } from "./FillInBlankExercise";
 import { TranslationExercise } from "./TranslationExercise";
 import { FreeWritingExercise } from "./FreeWritingExercise";
+import { WordOrderingExercise } from "./WordOrderingExercise";
+import { ErrorCorrectionExercise } from "./ErrorCorrectionExercise";
 import { ExerciseResultFeedback } from "./ExerciseResultFeedback";
 import { useSubmitExerciseAttempt } from "../../hooks/useSubmitExerciseAttempt";
 import { useToast } from "../../context/ToastProvider";
 
-const UNIMPLEMENTED_TYPES = new Set([
-  "word_ordering",
-  "reading_comprehension",
-  "listening_comprehension",
-  "sentence_construction",
-  "grammar_error_correction",
-]);
+const UNIMPLEMENTED_TYPES = new Set(["reading_comprehension", "listening_comprehension", "sentence_construction"]);
 
 export function ExerciseRenderer({ exercise, lessonId }: { exercise: ExercisePublic; lessonId: string }) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -46,7 +42,9 @@ export function ExerciseRenderer({ exercise, lessonId }: { exercise: ExercisePub
       exercise.exerciseType === "fill_in_blank" ||
       exercise.exerciseType === "translation_es_en" ||
       exercise.exerciseType === "translation_en_es" ||
-      exercise.exerciseType === "free_writing"
+      exercise.exerciseType === "free_writing" ||
+      exercise.exerciseType === "word_ordering" ||
+      exercise.exerciseType === "grammar_error_correction"
     ) {
       response = { exerciseType: exercise.exerciseType, answer: textAnswer };
     } else {
@@ -72,6 +70,12 @@ export function ExerciseRenderer({ exercise, lessonId }: { exercise: ExercisePub
       )}
       {(exercise.exerciseType === "translation_es_en" || exercise.exerciseType === "translation_en_es") && (
         <TranslationExercise exercise={exercise} value={textAnswer} onChange={setTextAnswer} disabled={isDisabled} />
+      )}
+      {exercise.exerciseType === "word_ordering" && (
+        <WordOrderingExercise exercise={exercise} value={textAnswer} onChange={setTextAnswer} disabled={isDisabled} />
+      )}
+      {exercise.exerciseType === "grammar_error_correction" && (
+        <ErrorCorrectionExercise exercise={exercise} value={textAnswer} onChange={setTextAnswer} disabled={isDisabled} />
       )}
       {exercise.exerciseType === "free_writing" && (
         <FreeWritingExercise exercise={exercise} value={textAnswer} onChange={setTextAnswer} disabled={isDisabled} />

@@ -15,3 +15,4 @@ export * from "./schemas/speaking.schema";
 export * from "./types/database.types";
 export * from "./password";
 export * from "./constants/speakingQuestions";
+export * from "./constants/lessonStages";
