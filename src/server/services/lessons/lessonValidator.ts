@@ -278,7 +278,9 @@ function sectionIssues(section: Section, plan: SectionPlan, lesson: GeneratedLes
   const label = `"${plan.key}" section`;
 
   // amount
-  if (n < Math.ceil(plan.count * 0.6) || n > Math.floor(plan.count * 1.6) + 1) {
+  // Small sections (2-3 exercises) may come up one short: 60% of 2 would otherwise demand an exact match.
+  const minCount = Math.max(1, Math.min(Math.ceil(plan.count * 0.6), plan.count - 1));
+  if (n < minCount || n > Math.floor(plan.count * 1.6) + 1) {
     essential.push(`The ${label} needs about ${plan.count} exercises (you wrote ${n}).`);
   } else if (Math.abs(n - plan.count) > 1) {
     soft.push(`The ${label} should have about ${plan.count} exercises (you wrote ${n}).`);
