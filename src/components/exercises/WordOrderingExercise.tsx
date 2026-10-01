@@ -17,7 +17,7 @@ const chip =
   "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed";
 
 /** Tap the words in order to build the sentence; tap a placed word to take it back. */
-export function WordOrderingExercise({ exercise, value, onChange, disabled }: Props) {
+export function WordOrderingExercise({ exercise, onChange, disabled }: Props) {
   const words = exercise.content.words;
   // Positions in the word bank, in the order the student picked them (words can repeat, so we track indexes).
   const [picked, setPicked] = useState<number[]>([]);
