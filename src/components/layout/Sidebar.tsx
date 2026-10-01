@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, Mic, X } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { Logo } from "../ui/Logo";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -93,6 +94,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
           <NavLinks collapsed={collapsed} />
         </div>
 
+        <div className="relative z-10 mb-2 flex justify-center">
+          <ThemeToggle vertical={collapsed} />
+        </div>
+
         <button
           onClick={() => setCollapsed((c) => !c)}
           className="relative z-10 flex items-center justify-center rounded-xl bg-[var(--nav-hover-bg)] p-2 text-[var(--nav-text)] backdrop-blur-sm transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -138,8 +143,11 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
                 </button>
               </div>
 
-              <div className="relative z-10">
+              <div className="relative z-10 flex flex-1 flex-col gap-4">
                 <NavLinks collapsed={false} onNavigate={onMobileClose} />
+                <div className="flex justify-center">
+                  <ThemeToggle />
+                </div>
               </div>
             </motion.aside>
           </div>

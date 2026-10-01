@@ -2,7 +2,6 @@
 
 import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthProvider";
-import { ThemeToggle } from "./ThemeToggle";
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, signOut } = useAuth();
@@ -26,8 +25,7 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <ThemeToggle />
+      <div className="flex shrink-0 items-center">
         <button
           onClick={() => signOut()}
           className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-muted hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

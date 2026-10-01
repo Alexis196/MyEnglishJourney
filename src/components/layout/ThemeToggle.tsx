@@ -11,13 +11,19 @@ const options = [
   { value: "dark" as const, icon: Moon, label: "Tema oscuro" },
 ];
 
-/** Segmented control. Colours come from the --seg-* tokens, so light and dark share one component. */
-export function ThemeToggle() {
+/**
+ * Segmented control. Colours come from the --seg-* tokens, so light and dark share one component.
+ * `vertical` stacks the options for narrow spaces such as the collapsed sidebar rail.
+ */
+export function ThemeToggle({ vertical = false }: { vertical?: boolean }) {
   const { theme, setTheme } = useTheme();
 
   return (
     <div
-      className="flex items-center gap-0.5 rounded-full border border-[var(--seg-border)] bg-[var(--seg-bg)] p-1"
+      className={cn(
+        "flex items-center gap-0.5 rounded-full border border-[var(--seg-border)] bg-[var(--seg-bg)] p-1",
+        vertical && "flex-col",
+      )}
       role="radiogroup"
       aria-label="Preferencia de tema"
     >
