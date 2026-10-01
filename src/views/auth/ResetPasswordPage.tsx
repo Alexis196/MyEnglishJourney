@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { Lock } from "lucide-react";
 import { resetPasswordSchema, type ResetPasswordInput } from "@myenglishjourney/shared";
 import { AuthLayout } from "../../components/layout/AuthLayout";
-import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
+import { AuthInput } from "../../components/auth/AuthInput";
+import { AuthSubmitButton } from "../../components/auth/AuthSubmitButton";
+import { AuthAlert } from "../../components/auth/AuthAlert";
 import { supabase } from "../../lib/supabaseClient";
 import { useToast } from "../../context/ToastProvider";
 
@@ -35,23 +37,21 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <AuthLayout title="Nueva contraseña" subtitle="Elegí una contraseña nueva y segura">
+    <AuthLayout title="Nueva contraseña" subtitle="Elegí una contraseña nueva y segura.">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <Input
+        <AuthInput
           label="Nueva contraseña"
           type="password"
+          icon={Lock}
           autoComplete="new-password"
+          placeholder="Mínimo 8 caracteres"
           error={errors.password?.message}
           {...register("password")}
         />
-        {serverError && (
-          <p className="text-sm text-red-500" role="alert">
-            {serverError}
-          </p>
-        )}
-        <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
+        {serverError && <AuthAlert message={serverError} />}
+        <AuthSubmitButton isLoading={isSubmitting} loadingText="Guardando..." className="mt-1">
           Guardar contraseña
-        </Button>
+        </AuthSubmitButton>
       </form>
     </AuthLayout>
   );

@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
+import { Lock, Mail, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { registerSchema, type RegisterInput } from "@myenglishjourney/shared";
 import { AuthLayout } from "../../components/layout/AuthLayout";
-import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
+import { AuthInput } from "../../components/auth/AuthInput";
+import { AuthSubmitButton } from "../../components/auth/AuthSubmitButton";
+import { AuthAlert } from "../../components/auth/AuthAlert";
+import { AuthSwitch } from "../../components/auth/AuthSwitch";
 import { supabase } from "../../lib/supabaseClient";
 import { useToast } from "../../context/ToastProvider";
 
@@ -40,38 +42,43 @@ export function RegisterPage() {
   };
 
   return (
-    <AuthLayout title="Creá tu cuenta" subtitle="Empezá tu programa de 90 días">
+    <AuthLayout
+      title="Empezá tu English Journey"
+      subtitle="Creá tu cuenta y comenzá a construir tu camino en inglés."
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <Input label="Nombre completo" autoComplete="name" error={errors.fullName?.message} {...register("fullName")} />
-        <Input
+        <AuthInput
+          label="Nombre completo"
+          icon={User}
+          autoComplete="name"
+          placeholder="Tu nombre y apellido"
+          error={errors.fullName?.message}
+          {...register("fullName")}
+        />
+        <AuthInput
           label="Correo electrónico"
           type="email"
+          icon={Mail}
           autoComplete="email"
+          placeholder="usuario@email.com"
           error={errors.email?.message}
           {...register("email")}
         />
-        <Input
+        <AuthInput
           label="Contraseña"
           type="password"
+          icon={Lock}
           autoComplete="new-password"
+          placeholder="Mínimo 8 caracteres"
           error={errors.password?.message}
           {...register("password")}
         />
-        {serverError && (
-          <p className="text-sm text-red-500" role="alert">
-            {serverError}
-          </p>
-        )}
-        <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
+        {serverError && <AuthAlert message={serverError} />}
+        <AuthSubmitButton isLoading={isSubmitting} loadingText="Creando cuenta..." className="mt-1">
           Crear cuenta
-        </Button>
+        </AuthSubmitButton>
       </form>
-      <p className="mt-4 text-center text-sm text-muted">
-        ¿Ya tenés cuenta?{" "}
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Iniciá sesión
-        </Link>
-      </p>
+      <AuthSwitch prompt="¿Ya tenés una cuenta?" href="/login" action="Iniciar sesión" />
     </AuthLayout>
   );
 }

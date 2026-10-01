@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
+import { Mail } from "lucide-react";
 import { forgotPasswordSchema, type ForgotPasswordInput } from "@myenglishjourney/shared";
 import { AuthLayout } from "../../components/layout/AuthLayout";
-import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
+import { AuthInput } from "../../components/auth/AuthInput";
+import { AuthSubmitButton } from "../../components/auth/AuthSubmitButton";
+import { AuthAlert } from "../../components/auth/AuthAlert";
+import { AuthSwitch } from "../../components/auth/AuthSwitch";
 import { supabase } from "../../lib/supabaseClient";
 
 export function ForgotPasswordPage() {
@@ -34,35 +36,29 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout title="Recuperar contraseña" subtitle="Te enviamos un enlace para restablecerla">
+    <AuthLayout title="Recuperar contraseña" subtitle="Te enviamos un enlace para restablecerla.">
       {sent ? (
-        <p className="text-center text-sm text-zinc-700 dark:text-zinc-300">
+        <p className="text-sm leading-relaxed text-[var(--auth-label)]" role="status">
           Si el correo existe, vas a recibir un enlace para restablecer tu contraseña.
         </p>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-          <Input
+          <AuthInput
             label="Correo electrónico"
             type="email"
+            icon={Mail}
             autoComplete="email"
+            placeholder="usuario@email.com"
             error={errors.email?.message}
             {...register("email")}
           />
-          {serverError && (
-            <p className="text-sm text-red-500" role="alert">
-              {serverError}
-            </p>
-          )}
-          <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
+          {serverError && <AuthAlert message={serverError} />}
+          <AuthSubmitButton isLoading={isSubmitting} loadingText="Enviando..." className="mt-1">
             Enviar enlace
-          </Button>
+          </AuthSubmitButton>
         </form>
       )}
-      <p className="mt-4 text-center text-sm text-muted">
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Volver a iniciar sesión
-        </Link>
-      </p>
+      <AuthSwitch prompt="¿Ya te acordaste?" href="/login" action="Volver a iniciar sesión" />
     </AuthLayout>
   );
 }

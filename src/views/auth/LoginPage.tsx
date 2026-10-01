@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { loginSchema, type LoginInput } from "@myenglishjourney/shared";
 import { AuthLayout } from "../../components/layout/AuthLayout";
-import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
+import { AuthInput } from "../../components/auth/AuthInput";
+import { AuthSubmitButton } from "../../components/auth/AuthSubmitButton";
+import { AuthAlert } from "../../components/auth/AuthAlert";
+import { AuthSwitch } from "../../components/auth/AuthSwitch";
 import { supabase } from "../../lib/supabaseClient";
 import { useToast } from "../../context/ToastProvider";
 
@@ -39,42 +42,40 @@ export function LoginPage() {
   };
 
   return (
-    <AuthLayout title="Iniciá sesión" subtitle="Continuá tu camino de aprendizaje">
+    <AuthLayout title="¡Qué bueno verte de nuevo!" subtitle="Iniciá sesión para continuar tu aprendizaje.">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <Input
+        <AuthInput
           label="Correo electrónico"
           type="email"
+          icon={Mail}
           autoComplete="email"
+          placeholder="usuario@email.com"
           error={errors.email?.message}
           {...register("email")}
         />
-        <Input
+        <AuthInput
           label="Contraseña"
           type="password"
+          icon={Lock}
           autoComplete="current-password"
+          placeholder="••••••••••"
           error={errors.password?.message}
           {...register("password")}
         />
-        {serverError && (
-          <p className="text-sm text-red-500" role="alert">
-            {serverError}
-          </p>
-        )}
-        <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
-          Iniciar sesión
-        </Button>
-      </form>
-      <div className="mt-4 flex flex-col items-center gap-2 text-sm">
-        <Link href="/forgot-password" className="text-primary hover:underline">
-          ¿Olvidaste tu contraseña?
-        </Link>
-        <p className="text-muted">
-          ¿No tenés cuenta?{" "}
-          <Link href="/register" className="font-medium text-primary hover:underline">
-            Registrate
+        <div className="-mt-1 flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="rounded-md px-1 text-sm text-[var(--auth-link)] transition-colors duration-200 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            ¿Olvidaste tu contraseña?
           </Link>
-        </p>
-      </div>
+        </div>
+        {serverError && <AuthAlert message={serverError} />}
+        <AuthSubmitButton isLoading={isSubmitting} loadingText="Ingresando..." className="mt-1">
+          Iniciar sesión
+        </AuthSubmitButton>
+      </form>
+      <AuthSwitch prompt="¿Todavía no tenés una cuenta?" href="/register" action="Crear cuenta" />
     </AuthLayout>
   );
 }
