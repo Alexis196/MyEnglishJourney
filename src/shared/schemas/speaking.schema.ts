@@ -16,6 +16,8 @@ export const submitSpeakingRecordingSchema = z.object({
   mimeType: z.enum(SUPPORTED_AUDIO_MIME_TYPES),
   durationSeconds: z.number().int().min(1).max(300),
   audioPath: z.string().min(1).max(300),
+  /** True when the student revealed the Spanish translation of the question before answering. */
+  usedTranslation: z.boolean().optional(),
 });
 export type SubmitSpeakingRecordingInput = z.infer<typeof submitSpeakingRecordingSchema>;
 

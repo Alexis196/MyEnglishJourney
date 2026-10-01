@@ -15,6 +15,21 @@ const envSchema = z.object({
 
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
+  // Master switch for OpenAI. While "false" (default) NO request is ever sent to OpenAI, whatever the other
+  // settings or keys are; Gemini is the only provider. Server-only: never expose it with a NEXT_PUBLIC_ prefix.
+  AI_OPENAI_FALLBACK_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+
+  // Safety limit for AI lesson generations a single user can start per rolling 24h. It caps cost only —
+  // it never gates pedagogical progress (finishing a lesson always unlocks the next one).
+  LESSON_GENERATIONS_PER_DAY: z.coerce.number().int().min(1).max(500).default(10),
+  // Prepare the next lesson in the background right after a lesson is completed ("false" to disable).
+  LESSON_PREFETCH_NEXT: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
 });
 
 // Treat blank env vars (e.g. `SUPABASE_URL=` left empty in .env) as unset rather than
@@ -39,4 +54,5 @@ export const env = parsed.data;
 export const isSupabaseConfigured = Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY);
 export const isGeminiConfigured = Boolean(env.GEMINI_API_KEY);
 export const isOpenAiConfigured = Boolean(env.OPENAI_API_KEY);
-export const isAiConfigured = isGeminiConfigured || isOpenAiConfigured;
+// OpenAI only counts as an available provider when its fallback is explicitly enabled.
+export const isAiConfigured = isGeminiConfigured || (env.AI_OPENAI_FALLBACK_ENABLED && isOpenAiConfigured);

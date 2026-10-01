@@ -9,6 +9,9 @@ export type PlanDayType = z.infer<typeof planDayTypeSchema>;
 export const planDayStatusSchema = z.enum(["locked", "available", "completed"]);
 export type PlanDayStatus = z.infer<typeof planDayStatusSchema>;
 
+export const lessonGenerationStatusSchema = z.enum(["pending", "generating", "ready", "failed"]);
+export type LessonGenerationStatus = z.infer<typeof lessonGenerationStatusSchema>;
+
 export const planDaySchema = z.object({
   id: z.string().uuid(),
   learningPlanId: z.string().uuid(),
@@ -19,11 +22,27 @@ export const planDaySchema = z.object({
   status: planDayStatusSchema,
   unlockedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
+  theme: z.string().nullable(),
+  generationStatus: lessonGenerationStatusSchema,
 });
 export type PlanDay = z.infer<typeof planDaySchema>;
 
 export const learningPlanStatusSchema = z.enum(["active", "completed", "archived"]);
 export type LearningPlanStatus = z.infer<typeof learningPlanStatusSchema>;
+
+/**
+ * What the lesson engine knows about the student's context, stored per plan (learning_plans.personalization).
+ * Every field except focusAreas/minutesPerSession is optional: nothing is invented when the student skipped it.
+ */
+export const planPersonalizationSchema = z.object({
+  profession: z.string().trim().min(1).max(120).optional(),
+  interests: z.array(z.enum(INTERESTS)).default([]),
+  otherInterests: z.string().trim().min(1).max(200).optional(),
+  primaryGoal: z.enum(MAIN_GOALS).optional(),
+  focusAreas: z.array(z.enum(FOCUS_AREAS)).default([]),
+  minutesPerSession: z.number().int().min(10).max(240),
+});
+export type PlanPersonalization = z.infer<typeof planPersonalizationSchema>;
 
 export const learningPlanSchema = z.object({
   id: z.string().uuid(),
@@ -34,6 +53,7 @@ export const learningPlanSchema = z.object({
   targetLevelStart: z.enum(CEFR_LEVELS).nullable(),
   targetLevelEnd: z.enum(CEFR_LEVELS).nullable(),
   generatedBy: z.enum(["ai", "manual", "template"]),
+  personalization: planPersonalizationSchema.nullable(),
 });
 export type LearningPlan = z.infer<typeof learningPlanSchema>;
 
@@ -63,7 +83,13 @@ const CEFR_ORDER = new Map(CEFR_LEVELS.map((level, index) => [level, index]));
 export const generatePlanRequestSchema = z
   .object({
     // About the student — used to personalize themes, vocabulary and examples.
-    occupation: z.string().trim().min(2, "Contanos a qué te dedicás").max(120),
+    // Optional: when left empty the lessons simply do not assume any profession.
+    occupation: z
+      .string()
+      .trim()
+      .max(120)
+      .optional()
+      .transform((value) => (value && value.length >= 2 ? value : undefined)),
     interests: z.array(z.enum(INTERESTS)).max(INTERESTS.length),
     otherInterests: z.string().trim().max(200).optional(),
     mainGoal: z.enum(MAIN_GOALS),

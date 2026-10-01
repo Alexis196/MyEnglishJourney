@@ -10,6 +10,56 @@ import { validateTranslation } from "./exerciseValidators/translation.validator"
 import { aiRouter, buildWritingFeedbackSystemPrompt, buildWritingFeedbackUserPrompt } from "./ai/index";
 import { AIProviderFailureError } from "./ai/AIRouter";
 import { logger } from "../utils/logger";
+import { errorJournalRepository } from "../repositories/errorJournal.repository";
+import { describeExercise } from "./lessons/reviewSelection";
+
+const MAX_WRITING_ERRORS_LOGGED = 3;
+
+/** Best effort: the journal feeds the dashboard and never blocks (or fails) answering an exercise. */
+async function logMistake(
+  supabase: SupabaseClient,
+  userId: string,
+  attemptId: string,
+  exercise: { exercise_type: string; content: Record<string, unknown>; answer_key: Record<string, unknown> },
+  response: ExerciseResponse,
+  aiFeedback: Record<string, unknown> | null,
+): Promise<void> {
+  try {
+    if (response.exerciseType === "free_writing") {
+      const errors = (aiFeedback as { grammarErrors?: Array<{ original: string; corrected: string; explanation: string }> } | null)
+        ?.grammarErrors;
+      for (const item of (errors ?? []).slice(0, MAX_WRITING_ERRORS_LOGGED)) {
+        await errorJournalRepository.record(supabase, {
+          userId,
+          sourceType: "writing",
+          sourceId: attemptId,
+          category: "grammar",
+          originalText: item.original,
+          correctedText: item.corrected,
+          explanation: item.explanation,
+        });
+      }
+      return;
+    }
+
+    const described = describeExercise(
+      { exerciseType: exercise.exercise_type, content: exercise.content, answerKey: exercise.answer_key },
+      response as unknown as Record<string, unknown>,
+    );
+    if (!described?.studentAnswer || !described.expectedAnswer) return;
+    await errorJournalRepository.record(supabase, {
+      userId,
+      sourceType: "exercise",
+      sourceId: attemptId,
+      category: exercise.exercise_type.startsWith("translation") ? "vocabulary" : "grammar",
+      originalText: described.studentAnswer,
+      correctedText: described.expectedAnswer,
+      explanation: `En “${described.question}” la respuesta correcta era “${described.expectedAnswer}”.`,
+    });
+  } catch (error) {
+    logger.warn({ err: error, attemptId }, "Could not write to the error journal");
+  }
+}
 
 export const exerciseService = {
   async submitAttempt(
@@ -50,6 +100,15 @@ export const exerciseService = {
         evaluationStatus = result.isCorrect ? "auto_correct" : "auto_incorrect";
         break;
       }
+      case "word_ordering":
+      case "grammar_error_correction": {
+        // Closed answers: corrected deterministically against every accepted phrasing, no AI involved.
+        const result = validateFillInBlank(exercise.answer_key as unknown as ClosedTextAnswerKey, response.answer);
+        isCorrect = result.isCorrect;
+        score = result.score;
+        evaluationStatus = result.isCorrect ? "auto_correct" : "auto_incorrect";
+        break;
+      }
       case "translation_es_en":
       case "translation_en_es": {
         const result = validateTranslation(exercise.answer_key as unknown as ClosedTextAnswerKey, response.answer);
@@ -67,7 +126,12 @@ export const exerciseService = {
           const result = await aiRouter.generate(supabase, {
             activityType: "writing_feedback",
             systemPrompt: buildWritingFeedbackSystemPrompt(explanationLanguage),
-            userPrompt: buildWritingFeedbackUserPrompt({ exercisePrompt: exerciseContent.prompt, studentAnswer: response.answer }),
+            userPrompt: buildWritingFeedbackUserPrompt({
+              exercisePrompt: exerciseContent.prompt,
+              studentAnswer: response.answer,
+              level: profile.current_level,
+              minWords: (exercise.content as { minWords?: number }).minWords,
+            }),
             responseSchema: writingFeedbackSchema,
             userId,
           });
@@ -102,6 +166,10 @@ export const exerciseService = {
       aiFeedback,
       evaluationStatus,
     });
+
+    if (isCorrect === false || (response.exerciseType === "free_writing" && aiFeedback)) {
+      await logMistake(supabase, userId, attempt.id, exercise, response, aiFeedback);
+    }
 
     return {
       id: attempt.id,

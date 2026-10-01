@@ -18,7 +18,9 @@ export const dashboardSummarySchema = z.object({
   longestStreak: z.number().int().nonnegative(),
   nextLesson: z
     .object({
-      lessonId: z.string().uuid(),
+      /** Null while the lesson has not been generated yet; open the day page to prepare it. */
+      lessonId: z.string().uuid().nullable(),
+      planDayId: z.string().uuid(),
       title: z.string(),
       dayNumber: z.number().int().positive(),
     })

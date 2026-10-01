@@ -8,6 +8,7 @@ export interface CreateLearningPlanInput {
   targetLevelStart: string;
   targetLevelEnd: string;
   generatedBy: "ai" | "manual" | "template";
+  personalization?: Record<string, unknown>;
 }
 
 export const learningPlanRepository = {
@@ -28,6 +29,12 @@ export const learningPlanRepository = {
     const { data, error } = await supabase.from("learning_plans").select("*").eq("id", planId).maybeSingle();
     if (error) throw error;
     return (data as LearningPlanRow | null) ?? null;
+  },
+
+  /** Deleting a plan cascades to its days and lessons; profiles.current_plan_id falls back to null. */
+  async delete(supabase: SupabaseClient, planId: string): Promise<void> {
+    const { error } = await supabase.from("learning_plans").delete().eq("id", planId);
+    if (error) throw error;
   },
 
   /** The user's plans, newest first (RLS already limits rows to the caller). */
@@ -80,6 +87,7 @@ export const learningPlanRepository = {
         target_level_start: input.targetLevelStart,
         target_level_end: input.targetLevelEnd,
         generated_by: input.generatedBy,
+        personalization: input.personalization ?? null,
       })
       .select("*")
       .single();

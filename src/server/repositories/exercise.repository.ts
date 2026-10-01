@@ -10,6 +10,7 @@ export interface CreateExerciseInput {
   content: Record<string, unknown>;
   answerKey: Record<string, unknown>;
   points?: number;
+  difficulty?: string;
 }
 
 export const exerciseRepository = {
@@ -38,6 +39,7 @@ export const exerciseRepository = {
           content: row.content,
           answer_key: row.answerKey,
           points: row.points ?? 10,
+          difficulty: row.difficulty ?? null,
         })),
       )
       .select("*");

@@ -1,12 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  CefrLevel,
+import {
+  MAX_OPEN_PLANS,
+  planPersonalizationSchema,
+  type CefrLevel,
   CurrentLearningPlanResponse,
   LearningPlanListResponse,
   LearningPlanSummary,
   LearningPlanRow,
 } from "@myenglishjourney/shared";
-import { NotFoundError } from "../utils/AppError";
+import { ConflictError, NotFoundError } from "../utils/AppError";
 import { profileRepository } from "../repositories/profile.repository";
 import { learningPlanRepository } from "../repositories/learningPlan.repository";
 import { planDayRepository } from "../repositories/planDay.repository";
@@ -21,6 +23,7 @@ function toPlan(plan: LearningPlanRow) {
     targetLevelStart: plan.target_level_start as CefrLevel | null,
     targetLevelEnd: plan.target_level_end as CefrLevel | null,
     generatedBy: plan.generated_by,
+    personalization: planPersonalizationSchema.safeParse(plan.personalization).data ?? null,
   };
 }
 
@@ -28,11 +31,12 @@ export const learningPlanService = {
   async list(supabase: SupabaseClient, userId: string): Promise<LearningPlanListResponse> {
     const [profile, plans] = await Promise.all([
       profileRepository.getById(supabase, userId),
-      learningPlanRepository.listForUser(supabase, userId),
+      learningPlanRepository.listForUser(supabase, userId, true),
     ]);
     // Same rule as getCurrentForUser, resolved in memory from the list we already have.
+    const open = plans.filter((plan) => plan.status !== "archived");
     const current =
-      plans.find((plan) => plan.id === profile.current_plan_id) ?? plans.find((plan) => plan.status === "active");
+      open.find((plan) => plan.id === profile.current_plan_id) ?? open.find((plan) => plan.status === "active");
     const completed = await planDayRepository.countCompletedByPlan(
       supabase,
       plans.map((p) => p.id),
@@ -71,6 +75,41 @@ export const learningPlanService = {
     return this.getCurrent(supabase, userId);
   },
 
+  /** Brings an archived plan back, respecting the open-plans limit. */
+  async unarchive(supabase: SupabaseClient, userId: string, planId: string): Promise<CurrentLearningPlanResponse> {
+    const plan = await learningPlanRepository.getById(supabase, planId);
+    if (!plan || plan.user_id !== userId) throw new NotFoundError("Plan no encontrado");
+    if (plan.status !== "archived") return this.getCurrent(supabase, userId);
+
+    const openPlans = await learningPlanRepository.countOpenForUser(supabase, userId);
+    if (openPlans >= MAX_OPEN_PLANS) {
+      throw new ConflictError(
+        `Llegaste al máximo de ${MAX_OPEN_PLANS} planes activos. Archivá o eliminá alguno para restaurar este.`,
+        "plan_limit_reached",
+      );
+    }
+    await learningPlanRepository.setStatus(supabase, plan.id, "active");
+
+    const profile = await profileRepository.getById(supabase, userId);
+    if (!profile.current_plan_id) await profileRepository.update(supabase, userId, { current_plan_id: plan.id });
+    return this.getCurrent(supabase, userId);
+  },
+
+  /** Permanent: removes the plan with its days, lessons and exercises. */
+  async remove(supabase: SupabaseClient, userId: string, planId: string): Promise<CurrentLearningPlanResponse> {
+    const plan = await learningPlanRepository.getById(supabase, planId);
+    if (!plan || plan.user_id !== userId) throw new NotFoundError("Plan no encontrado");
+
+    await learningPlanRepository.delete(supabase, plan.id);
+
+    const profile = await profileRepository.getById(supabase, userId);
+    if (!profile.current_plan_id) {
+      const fallback = await learningPlanRepository.getActiveForUser(supabase, userId);
+      if (fallback) await profileRepository.update(supabase, userId, { current_plan_id: fallback.id });
+    }
+    return this.getCurrent(supabase, userId);
+  },
+
   async getCurrent(supabase: SupabaseClient, userId: string): Promise<CurrentLearningPlanResponse> {
     const profile = await profileRepository.getById(supabase, userId);
     const plan = await learningPlanRepository.getCurrentForUser(supabase, userId, profile.current_plan_id);
@@ -90,6 +129,8 @@ export const learningPlanService = {
         status: day.status,
         unlockedAt: day.unlocked_at,
         completedAt: day.completed_at,
+        theme: day.theme,
+        generationStatus: day.generation_status,
       })),
     };
   },

@@ -25,6 +25,8 @@ export const IMPLEMENTED_EXERCISE_TYPES: readonly ExerciseType[] = [
   "translation_es_en",
   "translation_en_es",
   "free_writing",
+  "word_ordering",
+  "grammar_error_correction",
 ];
 
 export const CLOSED_ANSWER_EXERCISE_TYPES: readonly ExerciseType[] = [
@@ -32,6 +34,8 @@ export const CLOSED_ANSWER_EXERCISE_TYPES: readonly ExerciseType[] = [
   "fill_in_blank",
   "translation_es_en",
   "translation_en_es",
+  "word_ordering",
+  "grammar_error_correction",
 ];
 
 export const AI_EVALUATED_EXERCISE_TYPES: readonly ExerciseType[] = ["free_writing"];

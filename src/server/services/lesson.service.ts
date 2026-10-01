@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ExercisePublic, LessonDetail, LessonSection } from "@myenglishjourney/shared";
 import { lessonRepository } from "../repositories/lesson.repository";
+import { planDayProgressService, type DayCompletion } from "./planDayProgress.service";
 
 export const lessonService = {
   async getForUser(supabase: SupabaseClient, userId: string, lessonId: string): Promise<LessonDetail> {
@@ -49,14 +50,22 @@ export const lessonService = {
     };
   },
 
+  /**
+   * Saves lesson progress. When the lesson is completed, its plan day is completed and the next day is unlocked
+   * (see planDayProgressService); the returned completion tells the caller what was unlocked.
+   */
   async updateProgress(
     supabase: SupabaseClient,
+    userId: string,
     lessonId: string,
     input: { currentSectionIndex: number; status?: LessonDetail["status"] },
-  ): Promise<void> {
+  ): Promise<DayCompletion | null> {
+    const status = input.status ?? "in_progress";
     await lessonRepository.updateProgress(supabase, lessonId, {
       current_section_index: input.currentSectionIndex,
-      status: input.status ?? "in_progress",
+      status,
     });
+    if (status !== "completed") return null;
+    return planDayProgressService.completeForLesson(supabase, userId, lessonId);
   },
 };

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { env } from "../../config/env";
 import { BudgetExceededError } from "../../utils/AppError";
 import { logger } from "../../utils/logger";
 import { AIErrorClassifier } from "./AIErrorClassifier";
@@ -16,6 +17,8 @@ export interface AIRouterOptions {
   maxRetriesPerProvider?: number;
   baseDelayMs?: number;
   maxDelayMs?: number;
+  /** Allow OpenAI at all. Defaults to AI_OPENAI_FALLBACK_ENABLED (off): when false OpenAI is never called. */
+  openaiEnabled?: boolean;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -32,6 +35,7 @@ export class AIRouter {
   private readonly maxRetriesPerProvider: number;
   private readonly baseDelayMs: number;
   private readonly maxDelayMs: number;
+  private readonly openaiEnabled: boolean;
 
   constructor(
     private readonly gemini: AIProvider,
@@ -41,6 +45,7 @@ export class AIRouter {
     this.maxRetriesPerProvider = options.maxRetriesPerProvider ?? 2;
     this.baseDelayMs = options.baseDelayMs ?? 500;
     this.maxDelayMs = options.maxDelayMs ?? 8000;
+    this.openaiEnabled = options.openaiEnabled ?? env.AI_OPENAI_FALLBACK_ENABLED;
   }
 
   async generate<T>(supabase: SupabaseClient, request: AIGenerationRequest<T>): Promise<AIGenerationResult<T>> {
@@ -54,13 +59,19 @@ export class AIRouter {
     // Audio input isn't implemented for OpenAIProvider (it would need a separate
     // transcription call via a different API) — audio requests always go to Gemini,
     // regardless of the user's configured provider_mode.
-    const providerOrder: AIProvider[] = request.audio
+    const requestedOrder: AIProvider[] = request.audio
       ? [this.gemini]
       : budget.settings.provider_mode === "gemini_only"
         ? [this.gemini]
         : budget.settings.provider_mode === "openai_only"
           ? [this.openai]
-          : [this.gemini, this.openai];
+          : request.preferProvider === "openai"
+            ? [this.openai, this.gemini]
+            : [this.gemini, this.openai];
+
+    // The single choke point for OpenAI: with the switch off it is removed from every possible order
+    // (auto, openai_only, preferProvider), so nothing in the app can reach it.
+    const providerOrder = requestedOrder.filter((provider) => this.openaiEnabled || provider !== this.openai);
 
     let lastError: ClassifiedAIError | undefined;
 

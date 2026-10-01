@@ -155,8 +155,8 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
         {step === 0 && (
           <>
             <Input
-              label="¿A qué te dedicás?"
-              placeholder="Ej: desarrollador frontend, diseñadora, estudiante de medicina…"
+              label="¿A qué te dedicás? (opcional)"
+              placeholder="Ej: diseñadora, estudiante de medicina, contador… Podés dejarlo vacío."
               error={errors.occupation?.message}
               {...register("occupation")}
             />

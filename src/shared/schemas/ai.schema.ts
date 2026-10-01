@@ -11,6 +11,7 @@ export const aiActivityTypeSchema = z.enum([
   "writing_feedback",
   "speaking_feedback",
   "plan_generation",
+  "lesson_generation",
   "error_journal_analysis",
   "chat",
 ]);

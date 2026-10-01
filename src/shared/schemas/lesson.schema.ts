@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LESSON_STAGES } from "../constants/lessonStages";
 import { exercisePublicSchema } from "./exercise.schema";
 
 export const lessonSectionTypeSchema = z.enum([
@@ -24,7 +25,18 @@ export type VocabularyItem = z.infer<typeof vocabularyItemSchema>;
  * field applies to every section_type (e.g. audioUrl only for listening) —
  * the renderer picks what it needs based on sectionType.
  */
+/** A tiny visual pattern for the grammar point: a header row plus a few example rows, e.g. I | am | from Spain. */
+export const grammarPatternSchema = z.object({
+  columns: z.array(z.string()).min(2).max(5),
+  rows: z.array(z.array(z.string())).min(1).max(6),
+  note: z.string().optional(),
+});
+export type GrammarPattern = z.infer<typeof grammarPatternSchema>;
+
 export const lessonSectionContentSchema = z.object({
+  /** Where this section sits in the lesson's progression (absent in lessons generated before stages existed). */
+  stage: z.enum(LESSON_STAGES).optional(),
+  pattern: grammarPatternSchema.optional(),
   explanation: z.string().optional(),
   examples: z.array(z.string()).optional(),
   vocabulary: z.array(vocabularyItemSchema).optional(),
@@ -66,3 +78,12 @@ export const updateLessonProgressSchema = z.object({
   status: lessonStatusSchema.optional(),
 });
 export type UpdateLessonProgressInput = z.infer<typeof updateLessonProgressSchema>;
+
+/** Result of asking the server to make sure a plan day has its lesson (see lessonEngine.service). */
+export const ensureLessonResponseSchema = z.object({
+  status: z.enum(["ready", "generating", "failed"]),
+  lessonId: z.string().uuid().nullable(),
+  /** Spanish, user-facing; only set when status is "failed". */
+  message: z.string().optional(),
+});
+export type EnsureLessonResponse = z.infer<typeof ensureLessonResponseSchema>;

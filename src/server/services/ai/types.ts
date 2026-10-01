@@ -29,6 +29,11 @@ export interface AIGenerationRequest<T> {
    * transcription step via a different API). See AIRouter.generate.
    */
   audio?: AIAudioInput;
+  /**
+   * Start with this provider when the user's mode is "auto" (the other one stays as fallback). Used to retry a
+   * lesson that failed validation on the other provider. Ignored for audio and for single-provider modes.
+   */
+  preferProvider?: AIProviderName;
 }
 
 export interface AIGenerationResult<T> {

@@ -1,9 +1,25 @@
 import { z } from "zod";
-import { CEFR_LEVELS } from "@myenglishjourney/shared";
+import { CEFR_LEVELS, EXERCISE_DIFFICULTIES, LESSON_STAGES, grammarPatternSchema } from "@myenglishjourney/shared";
 
-const aiExerciseSchema = z.object({
-  exerciseType: z.enum(["multiple_choice", "fill_in_blank", "translation_es_en", "translation_en_es", "free_writing"]),
+export const aiExerciseSchema = z.object({
+  exerciseType: z.enum([
+    "multiple_choice",
+    "fill_in_blank",
+    "translation_es_en",
+    "translation_en_es",
+    "free_writing",
+    "word_ordering",
+    "grammar_error_correction",
+  ]),
+  /** easy / medium / hard relative to the lesson; filled in from the blueprint when the model omits it. */
+  difficulty: z.enum(EXERCISE_DIFFICULTIES).optional(),
   prompt: z.string().optional(),
+  /** word_ordering: the words, in scrambled order. */
+  words: z.array(z.string()).optional(),
+  /** grammar_error_correction: the sentence that contains the mistake. */
+  sentenceWithError: z.string().optional(),
+  /** free_writing: sentence openers offered as help. */
+  starters: z.array(z.string()).optional(),
   options: z.array(z.string()).optional(),
   correctOptionIndex: z.number().int().optional(),
   sourceText: z.string().optional(),
@@ -18,10 +34,12 @@ const aiVocabularyItemSchema = z.object({
   example: z.string().optional(),
 });
 
-const aiSectionSchema = z.object({
+export const aiSectionSchema = z.object({
   sectionType: z.enum(["review", "vocabulary", "grammar", "interactive", "listening", "speaking", "final_assessment"]),
   title: z.string(),
+  stage: z.enum(LESSON_STAGES).optional(),
   explanation: z.string().optional(),
+  pattern: grammarPatternSchema.optional(),
   examples: z.array(z.string()).optional(),
   vocabulary: z.array(aiVocabularyItemSchema).optional(),
   exercises: z.array(aiExerciseSchema).default([]),
@@ -35,19 +53,30 @@ const aiDaySchema = z.object({
 });
 
 /**
- * Requiring exactly 90 entries from a single generation call is fragile —
- * models occasionally under/overshoot a long structured list. We accept a
- * partial skeleton (>=60 of 90) and the service backfills any missing day
- * numbers with a generic review day rather than failing the whole plan.
+ * The plan call returns only the skeleton (title + one theme per day); each day's lesson is generated on demand
+ * by the lesson engine. Requiring exactly 90 entries from one call is fragile, so we accept a partial list
+ * (>=60 of 90) and the service backfills any missing day.
  */
 export const planGenerationResponseSchema = z.object({
   planTitle: z.string(),
   targetLevelEnd: z.enum(CEFR_LEVELS),
   days: z.array(aiDaySchema).min(60),
-  firstLesson: z.object({
-    title: z.string(),
-    objective: z.string(),
-    sections: z.array(aiSectionSchema).min(1),
-  }),
 });
 export type PlanGenerationResponse = z.infer<typeof planGenerationResponseSchema>;
+
+/** One generated lesson (see lessons/lessonPrompt.ts for the contract given to the model). */
+export const generatedLessonSchema = z.object({
+  title: z.string().min(1),
+  objective: z.string().min(1),
+  sections: z.array(aiSectionSchema.extend({ exercises: z.array(aiExerciseSchema).optional() })).min(1),
+});
+type RawGeneratedLesson = z.infer<typeof generatedLessonSchema>;
+
+/** A generated lesson after normalisation: every section has an (possibly empty) exercise list. */
+export type GeneratedLesson = Omit<RawGeneratedLesson, "sections"> & {
+  sections: Array<Omit<RawGeneratedLesson["sections"][number], "exercises"> & { exercises: AIExercise[] }>;
+};
+
+export function normalizeGeneratedLesson(raw: RawGeneratedLesson): GeneratedLesson {
+  return { ...raw, sections: raw.sections.map((section) => ({ ...section, exercises: section.exercises ?? [] })) };
+}

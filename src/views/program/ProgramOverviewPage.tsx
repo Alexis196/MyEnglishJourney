@@ -25,7 +25,15 @@ const dayTypeIcon: Record<PlanDay["dayType"], typeof PlayCircle> = {
 
 function DayCell({ day }: { day: PlanDay }) {
   const Icon = day.status === "completed" ? CheckCircle2 : day.status === "locked" ? Lock : dayTypeIcon[day.dayType];
-  const isInteractive = day.status !== "locked" && day.lessonId;
+  // Open days link to their lesson, or to the day page that prepares it (and confirms rest days).
+  const href =
+    day.status === "locked"
+      ? null
+      : day.lessonId
+        ? `/program/lessons/${day.lessonId}`
+        : day.status === "completed"
+          ? null
+          : `/program/days/${day.id}`;
   const queryClient = useQueryClient();
   // Start loading the lesson as soon as the student points at / focuses the day.
   const warmLesson = () => {
@@ -34,6 +42,7 @@ function DayCell({ day }: { day: PlanDay }) {
 
   const content = (
     <div
+      title={day.theme ?? undefined}
       className={cn(
         "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-colors",
         day.status === "completed" &&
@@ -48,11 +57,11 @@ function DayCell({ day }: { day: PlanDay }) {
     </div>
   );
 
-  if (!isInteractive) return content;
+  if (!href) return content;
 
   return (
     <Link
-      href={`/program/lessons/${day.lessonId}`}
+      href={href}
       onMouseEnter={warmLesson}
       onFocus={warmLesson}
       className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">

@@ -45,7 +45,11 @@ export function HeroCard({ summary }: { summary: DashboardSummary }) {
 
         {summary.nextLesson && (
           <PrimaryLink
-            href={`/program/lessons/${summary.nextLesson.lessonId}`}
+            href={
+              summary.nextLesson.lessonId
+                ? `/program/lessons/${summary.nextLesson.lessonId}`
+                : `/program/days/${summary.nextLesson.planDayId}`
+            }
             tone="hero"
             className="w-fit"
           >

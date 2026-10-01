@@ -8,7 +8,23 @@ export interface UpsertLearningGoalsInput {
   motivation?: string;
 }
 
+export interface GoalsRow {
+  focus_areas: string[] | null;
+  daily_minutes_goal: number | null;
+  motivation: string | null;
+}
+
 export const learningGoalsRepository = {
+  async getForUser(supabase: SupabaseClient, userId: string): Promise<GoalsRow | null> {
+    const { data, error } = await supabase
+      .from("learning_goals")
+      .select("focus_areas, daily_minutes_goal, motivation")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as GoalsRow | null) ?? null;
+  },
+
   async upsertForUser(supabase: SupabaseClient, input: UpsertLearningGoalsInput): Promise<void> {
     const { data: existing, error: selectError } = await supabase
       .from("learning_goals")

@@ -33,6 +33,7 @@ export const speakingService = {
       userId,
       audioStoragePath: path,
       durationSeconds: input.durationSeconds,
+      usedTranslation: input.usedTranslation ?? false,
     });
 
     try {
