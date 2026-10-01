@@ -79,10 +79,15 @@ export const dashboardService = {
     const lessonRow = nextDay?.lesson_id
       ? (availableLessons.data ?? []).find((lesson) => lesson.id === nextDay.lesson_id)
       : undefined;
-    const nextLesson: DashboardSummary["nextLesson"] =
-      nextDay && lessonRow
-        ? { lessonId: lessonRow.id as string, title: lessonRow.title as string, dayNumber: nextDay.day_number }
-        : null;
+    // Without a lesson yet (not generated), the day still shows up: opening it prepares the lesson.
+    const nextLesson: DashboardSummary["nextLesson"] = nextDay
+      ? {
+          lessonId: (lessonRow?.id as string | undefined) ?? null,
+          planDayId: nextDay.id,
+          title: (lessonRow?.title as string | undefined) ?? nextDay.theme ?? `Día ${nextDay.day_number}`,
+          dayNumber: nextDay.day_number,
+        }
+      : null;
 
     const weeklyMap = new Map<string, { minutesStudied: number; exercisesCompleted: number }>();
     for (let i = 0; i < 7; i++) {

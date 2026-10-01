@@ -66,3 +66,12 @@ export const updateLessonProgressSchema = z.object({
   status: lessonStatusSchema.optional(),
 });
 export type UpdateLessonProgressInput = z.infer<typeof updateLessonProgressSchema>;
+
+/** Result of asking the server to make sure a plan day has its lesson (see lessonEngine.service). */
+export const ensureLessonResponseSchema = z.object({
+  status: z.enum(["ready", "generating", "failed"]),
+  lessonId: z.string().uuid().nullable(),
+  /** Spanish, user-facing; only set when status is "failed". */
+  message: z.string().optional(),
+});
+export type EnsureLessonResponse = z.infer<typeof ensureLessonResponseSchema>;

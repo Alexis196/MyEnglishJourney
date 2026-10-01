@@ -31,6 +31,7 @@ export interface LearningPlanRow {
   target_level_start: string | null;
   target_level_end: string | null;
   generated_by: "ai" | "manual" | "template";
+  personalization: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +47,11 @@ export interface PlanDayRow {
   status: "locked" | "available" | "completed";
   unlocked_at: string | null;
   completed_at: string | null;
+  theme: string | null;
+  generation_status: "pending" | "generating" | "ready" | "failed";
+  generation_started_at: string | null;
+  generation_attempts: number;
+  generation_error: string | null;
 }
 
 export interface LessonRow {
@@ -123,6 +129,7 @@ export interface SpeakingSessionRow {
   transcript: string | null;
   ai_feedback: Record<string, unknown> | null;
   status: "recorded" | "transcribing" | "analyzed" | "failed";
+  used_translation: boolean;
   created_at: string;
 }
 

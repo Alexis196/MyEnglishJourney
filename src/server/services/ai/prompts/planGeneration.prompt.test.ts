@@ -19,8 +19,12 @@ describe("generatePlanRequestSchema", () => {
     expect(generatePlanRequestSchema.safeParse(validRequest).success).toBe(true);
   });
 
-  it("requires an occupation", () => {
-    expect(generatePlanRequestSchema.safeParse({ ...validRequest, occupation: " " }).success).toBe(false);
+  it("treats the occupation as optional and never invents one", () => {
+    for (const occupation of [" ", "", undefined]) {
+      const result = generatePlanRequestSchema.safeParse({ ...validRequest, occupation });
+      expect(result.success).toBe(true);
+      expect(result.success && result.data.occupation).toBeUndefined();
+    }
   });
 
   it("rejects a target level below the current level", () => {
@@ -37,5 +41,12 @@ describe("buildPlanGenerationUserPrompt", () => {
     expect(prompt).toContain("Música");
     expect(prompt).toContain("chess");
     expect(prompt).toContain("Conseguir un trabajo en inglés");
+  });
+
+  it("states that no occupation was provided instead of making one up", () => {
+    const parsed = generatePlanRequestSchema.parse({ ...validRequest, occupation: "" });
+    const prompt = buildPlanGenerationUserPrompt(parsed);
+    expect(prompt).toContain("Occupation: not provided");
+    expect(prompt).not.toMatch(/developer|programmer|software/i);
   });
 });

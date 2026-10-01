@@ -31,6 +31,24 @@ export const lessonRepository = {
     return data as LessonRow;
   },
 
+  async getPlanDayId(supabase: SupabaseClient, lessonId: string): Promise<string> {
+    const { data, error } = await supabase.from("lessons").select("plan_day_id").eq("id", lessonId).maybeSingle();
+    if (error) throw error;
+    if (!data) throw new NotFoundError("Clase no encontrada");
+    return data.plan_day_id as string;
+  },
+
+  async findIdByPlanDay(supabase: SupabaseClient, planDayId: string): Promise<string | null> {
+    const { data, error } = await supabase.from("lessons").select("id").eq("plan_day_id", planDayId).maybeSingle();
+    if (error) throw error;
+    return (data?.id as string | undefined) ?? null;
+  },
+
+  async deleteById(supabase: SupabaseClient, lessonId: string): Promise<void> {
+    const { error } = await supabase.from("lessons").delete().eq("id", lessonId);
+    if (error) throw error;
+  },
+
   async getByIdForUser(supabase: SupabaseClient, userId: string, lessonId: string): Promise<LessonWithSections> {
     const { data, error } = await supabase
       .from("lessons")

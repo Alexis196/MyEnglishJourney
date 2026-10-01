@@ -8,6 +8,7 @@ export interface CreateLearningPlanInput {
   targetLevelStart: string;
   targetLevelEnd: string;
   generatedBy: "ai" | "manual" | "template";
+  personalization?: Record<string, unknown>;
 }
 
 export const learningPlanRepository = {
@@ -80,6 +81,7 @@ export const learningPlanRepository = {
         target_level_start: input.targetLevelStart,
         target_level_end: input.targetLevelEnd,
         generated_by: input.generatedBy,
+        personalization: input.personalization ?? null,
       })
       .select("*")
       .single();

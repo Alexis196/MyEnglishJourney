@@ -102,6 +102,32 @@ describe("AIRouter", () => {
     expect(openai.generateStructured).not.toHaveBeenCalled();
   });
 
+  it("starts with openai when asked to (lesson repair), keeping gemini as its fallback", async () => {
+    allowBudget();
+    const gemini = makeProvider("gemini");
+    const openai = makeProvider("openai");
+    openai.generateStructured.mockResolvedValue(fakeResult("openai"));
+
+    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2 });
+    const result = await router.generate(fakeSupabase, { ...fakeRequest(), preferProvider: "openai" });
+
+    expect(result.provider).toBe("openai");
+    expect(gemini.generateStructured).not.toHaveBeenCalled();
+  });
+
+  it("ignores the provider preference when the user is locked to gemini_only", async () => {
+    allowBudget({ provider_mode: "gemini_only" });
+    const gemini = makeProvider("gemini");
+    const openai = makeProvider("openai");
+    gemini.generateStructured.mockResolvedValue(fakeResult("gemini"));
+
+    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2 });
+    const result = await router.generate(fakeSupabase, { ...fakeRequest(), preferProvider: "openai" });
+
+    expect(result.provider).toBe("gemini");
+    expect(openai.generateStructured).not.toHaveBeenCalled();
+  });
+
   it("falls back to openai when gemini is quota-exceeded", async () => {
     allowBudget();
     const gemini = makeProvider("gemini");

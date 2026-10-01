@@ -60,7 +60,9 @@ export class AIRouter {
         ? [this.gemini]
         : budget.settings.provider_mode === "openai_only"
           ? [this.openai]
-          : [this.gemini, this.openai];
+          : request.preferProvider === "openai"
+            ? [this.openai, this.gemini]
+            : [this.gemini, this.openai];
 
     let lastError: ClassifiedAIError | undefined;
 

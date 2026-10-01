@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  CefrLevel,
+import {
+  planPersonalizationSchema,
+  type CefrLevel,
   CurrentLearningPlanResponse,
   LearningPlanListResponse,
   LearningPlanSummary,
@@ -21,6 +22,7 @@ function toPlan(plan: LearningPlanRow) {
     targetLevelStart: plan.target_level_start as CefrLevel | null,
     targetLevelEnd: plan.target_level_end as CefrLevel | null,
     generatedBy: plan.generated_by,
+    personalization: planPersonalizationSchema.safeParse(plan.personalization).data ?? null,
   };
 }
 
@@ -90,6 +92,8 @@ export const learningPlanService = {
         status: day.status,
         unlockedAt: day.unlocked_at,
         completedAt: day.completed_at,
+        theme: day.theme,
+        generationStatus: day.generation_status,
       })),
     };
   },

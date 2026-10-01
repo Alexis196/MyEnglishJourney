@@ -5,7 +5,7 @@ import { NotFoundError } from "../utils/AppError";
 export const speakingSessionRepository = {
   async create(
     supabase: SupabaseClient,
-    input: { userId: string; audioStoragePath: string; durationSeconds: number },
+    input: { userId: string; audioStoragePath: string; durationSeconds: number; usedTranslation?: boolean },
   ): Promise<SpeakingSessionRow> {
     const { data, error } = await supabase
       .from("speaking_sessions")
@@ -14,6 +14,7 @@ export const speakingSessionRepository = {
         audio_storage_path: input.audioStoragePath,
         duration_seconds: input.durationSeconds,
         status: "transcribing",
+        used_translation: input.usedTranslation ?? false,
       })
       .select("*")
       .single();

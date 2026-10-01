@@ -15,6 +15,15 @@ const envSchema = z.object({
 
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
+
+  // Safety limit for AI lesson generations a single user can start per rolling 24h. It caps cost only —
+  // it never gates pedagogical progress (finishing a lesson always unlocks the next one).
+  LESSON_GENERATIONS_PER_DAY: z.coerce.number().int().min(1).max(500).default(10),
+  // Prepare the next lesson in the background right after a lesson is completed ("false" to disable).
+  LESSON_PREFETCH_NEXT: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
 });
 
 // Treat blank env vars (e.g. `SUPABASE_URL=` left empty in .env) as unset rather than
