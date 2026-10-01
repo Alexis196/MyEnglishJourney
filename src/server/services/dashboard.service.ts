@@ -61,19 +61,28 @@ export const dashboardService = {
 
     if (!plan) return emptySummary;
 
-    const [days, nextDay] = await Promise.all([
+    // One round trip: the plan's days plus the lessons attached to its currently available days
+    // (lessons <-> plan_days has two foreign keys, so the embed names the one to follow).
+    const [days, availableLessons] = await Promise.all([
       planDayRepository.listForPlan(supabase, plan.id),
-      planDayRepository.getNextAvailable(supabase, plan.id),
+      supabase
+        .from("lessons")
+        .select("id, title, plan_days!lessons_plan_day_id_fkey!inner(learning_plan_id, status)")
+        .eq("plan_days.learning_plan_id", plan.id)
+        .eq("plan_days.status", "available"),
     ]);
+    if (availableLessons.error) throw availableLessons.error;
     const completedCount = days.filter((d) => d.status === "completed").length;
 
-    let nextLesson: DashboardSummary["nextLesson"] = null;
-    if (nextDay?.lesson_id) {
-      const { data: lessonRow } = await supabase.from("lessons").select("id, title").eq("id", nextDay.lesson_id).maybeSingle();
-      if (lessonRow) {
-        nextLesson = { lessonId: lessonRow.id as string, title: lessonRow.title as string, dayNumber: nextDay.day_number };
-      }
-    }
+    // `days` is ordered by day_number, so the first available day is the next one to study.
+    const nextDay = days.find((d) => d.status === "available") ?? null;
+    const lessonRow = nextDay?.lesson_id
+      ? (availableLessons.data ?? []).find((lesson) => lesson.id === nextDay.lesson_id)
+      : undefined;
+    const nextLesson: DashboardSummary["nextLesson"] =
+      nextDay && lessonRow
+        ? { lessonId: lessonRow.id as string, title: lessonRow.title as string, dayNumber: nextDay.day_number }
+        : null;
 
     const weeklyMap = new Map<string, { minutesStudied: number; exercisesCompleted: number }>();
     for (let i = 0; i < 7; i++) {
