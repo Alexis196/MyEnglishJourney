@@ -4,7 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { LayoutDashboard, BookOpen, User, ChevronLeft, ChevronRight, LogOut, Mic, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  BookOpen,
+  User,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Mic,
+  X,
+} from "lucide-react";
 import { cn } from "../../utils/cn";
 import { Logo } from "../ui/Logo";
 import { useAuth } from "../../context/AuthProvider";
@@ -34,7 +43,13 @@ function SidebarScenery() {
   );
 }
 
-function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+function NavLinks({
+  collapsed,
+  onNavigate,
+}: {
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
@@ -61,7 +76,9 @@ function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: 
             <Icon
               className={cn(
                 "h-[18px] w-[18px] shrink-0 transition-colors",
-                isActive ? "text-[var(--nav-active-icon)]" : "text-[var(--nav-icon)] group-hover:text-ink",
+                isActive
+                  ? "text-[var(--nav-active-icon)]"
+                  : "text-[var(--nav-icon)] group-hover:text-ink",
               )}
               aria-hidden="true"
             />
@@ -74,7 +91,13 @@ function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: 
 }
 
 /** "Salir" lives in the nav (same look as the menu items) so the topbar stays uncluttered on small screens. */
-function SignOutButton({ collapsed, onDone }: { collapsed: boolean; onDone?: () => void }) {
+function SignOutButton({
+  collapsed,
+  onDone,
+}: {
+  collapsed: boolean;
+  onDone?: () => void;
+}) {
   const { signOut } = useAuth();
 
   return (
@@ -92,51 +115,83 @@ function SignOutButton({ collapsed, onDone }: { collapsed: boolean; onDone?: () 
         collapsed && "justify-center px-0",
       )}
     >
-      <LogOut className="h-[18px] w-[18px] shrink-0 text-[var(--nav-icon)] group-hover:text-ink" aria-hidden="true" />
+      <LogOut
+        className="h-[18px] w-[18px] shrink-0 text-[var(--nav-icon)] group-hover:text-ink"
+        aria-hidden="true"
+      />
       {!collapsed && <span className="truncate">Salir</span>}
     </button>
   );
 }
 
-export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; onMobileClose: () => void }) {
+export function Sidebar({
+  mobileOpen,
+  onMobileClose,
+}: {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <>
-      <motion.aside
-        animate={{ width: collapsed ? 76 : 240 }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
-        className="relative isolate hidden shrink-0 flex-col overflow-hidden border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] px-3 py-4 md:flex"
-      >
-        {/* The skyline is skipped in the collapsed rail, where it would only add noise. */}
-        {!collapsed && <SidebarScenery />}
+      {/* The wrapper is not clipped, so the collapse handle can straddle the sidebar's right edge. */}
+      <div className="relative z-20 hidden shrink-0 md:flex">
+        <motion.aside
+          animate={{ width: collapsed ? 76 : 240 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="relative isolate flex shrink-0 flex-col overflow-hidden border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] px-3 py-4"
+        >
+          {/* The skyline is skipped in the collapsed rail, where it would only add noise. */}
+          {!collapsed && <SidebarScenery />}
 
-        <div className={cn("relative z-10 mb-6 flex items-center gap-2 px-2", collapsed && "justify-center px-0")}>
-          <Logo className="h-8 w-8" />
-          {!collapsed && <span className="truncate text-sm font-semibold text-ink">My English Journey</span>}
-        </div>
-
-        <div className="relative z-10 flex-1">
-          <NavLinks collapsed={collapsed} />
-          {/* Kept with the menu (not at the bottom) so it never sits on top of the skyline illustration. */}
-          <div className="mt-3 border-t border-[var(--sidebar-border)] pt-3">
-            <SignOutButton collapsed={collapsed} />
+          <div
+            className={cn(
+              "relative z-10 mb-5 flex items-center gap-2 px-2",
+              collapsed && "justify-center px-0",
+            )}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <Logo className="h-8 w-8 shrink-0" />
+              {!collapsed && (
+                <span className="truncate text-sm font-semibold text-ink">
+                  My English Journey
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="relative z-10 mb-2 flex justify-center">
-          <ThemeToggle vertical={collapsed} />
-        </div>
+          <div className="relative z-10 flex-1">
+            {/* Theme selector starts at the same level as the menu so it is the first thing you see. */}
+            <div className={cn("mb-4", collapsed && "flex justify-center")}>
+              <ThemeToggle vertical={collapsed} block={!collapsed} />
+            </div>
+            <NavLinks collapsed={collapsed} />
+            {/* Kept with the menu (not at the bottom) so it never sits on top of the skyline illustration. */}
+            <div className="mt-3 border-t border-[var(--sidebar-border)] pt-3">
+              <SignOutButton collapsed={collapsed} />
+            </div>
+          </div>
+        </motion.aside>
 
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="relative z-10 flex items-center justify-center rounded-xl bg-[var(--nav-hover-bg)] p-2 text-[var(--nav-text)] backdrop-blur-sm transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label={collapsed ? "Expandir barra lateral" : "Contraer barra lateral"}
-          title={collapsed ? "Expandir barra lateral" : "Contraer barra lateral"}
+          className="absolute right-0 top-[150px] z-30 flex h-7 w-7 translate-x-1/2 items-center justify-center rounded-full border border-[var(--seg-border)] bg-card text-[var(--nav-text)] shadow-card transition-colors hover:border-primary hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={
+            collapsed ? "Expandir barra lateral" : "Contraer barra lateral"
+          }
+          title={
+            collapsed ? "Expandir barra lateral" : "Contraer barra lateral"
+          }
+          aria-expanded={!collapsed}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </button>
-      </motion.aside>
+      </div>
 
       <AnimatePresence>
         {mobileOpen && (
@@ -162,7 +217,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
               <div className="relative z-10 mb-6 flex items-center justify-between gap-2 px-2">
                 <div className="flex items-center gap-2">
                   <Logo className="h-8 w-8" />
-                  <span className="truncate text-sm font-semibold text-ink">My English Journey</span>
+                  <span className="truncate text-sm font-semibold text-ink">
+                    My English Journey
+                  </span>
                 </div>
                 <button
                   onClick={onMobileClose}
@@ -174,10 +231,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
               </div>
 
               <div className="relative z-10 flex flex-1 flex-col gap-4">
+                <ThemeToggle block />
                 <NavLinks collapsed={false} onNavigate={onMobileClose} />
-                <div className="flex flex-col items-center gap-3">
+                <div className="border-t border-[var(--sidebar-border)] pt-3">
                   <SignOutButton collapsed={false} onDone={onMobileClose} />
-                  <ThemeToggle />
                 </div>
               </div>
             </motion.aside>

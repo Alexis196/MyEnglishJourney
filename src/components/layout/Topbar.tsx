@@ -10,7 +10,9 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   // Same query the app already prefetches, so this adds no request.
   const { data: profile } = useProfile();
   const level = profile?.currentLevel ?? null;
-  const displayName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "";
+  // Profile name wins (editable), then the sign-up metadata; only the first word is shown.
+  const fullName = profile?.fullName?.trim() || (user?.user_metadata?.full_name as string | undefined)?.trim() || "";
+  const firstName = fullName.split(/\s+/)[0] ?? "";
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-[var(--topbar-bg)] px-4 backdrop-blur-[12px] md:px-6">
@@ -23,11 +25,14 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           <Menu className="h-5 w-5" />
         </button>
         <div className="min-w-0 truncate text-sm text-muted">
-          {displayName && (
-            <span>
-              Hola, <span className="font-medium text-ink">{displayName}</span>
-            </span>
-          )}
+          <span>
+            Hola
+            {firstName && (
+              <>
+                , <span className="font-medium text-ink">{firstName}</span>
+              </>
+            )}
+          </span>
         </div>
       </div>
 

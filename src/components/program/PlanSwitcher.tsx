@@ -104,7 +104,7 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
                 disabled={busy}
                 aria-label={`Archivar ${plan.title}`}
                 title="Archivar plan"
-                className="absolute right-2 top-2 rounded-lg p-1.5 text-muted hover:bg-hover hover:text-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute right-3 top-[15px] flex h-6 w-6 items-center justify-center rounded-lg text-muted hover:bg-hover hover:text-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <Archive className="h-4 w-4" />
               </button>
