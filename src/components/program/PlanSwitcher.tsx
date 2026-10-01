@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Archive, Plus } from "lucide-react";
 import { MAX_OPEN_PLANS, type LearningPlanSummary } from "@myenglishjourney/shared";
 import { Badge } from "../ui/Badge";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { Button } from "../ui/Button";
 import { ProgressBar } from "../ui/ProgressBar";
 import { useArchivePlan, useSelectPlan } from "../../hooks/useLearningPlans";
 import { useToast } from "../../context/ToastProvider";
@@ -17,6 +20,9 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
   const selectPlan = useSelectPlan();
   const archivePlan = useArchivePlan();
   const { showToast } = useToast();
+  // The plan stays set while the dialog animates out, so its title does not vanish mid-transition.
+  const [planToArchive, setPlanToArchive] = useState<LearningPlanSummary | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const busy = selectPlan.isPending || archivePlan.isPending;
   const atLimit = plans.length >= MAX_OPEN_PLANS;
@@ -31,17 +37,15 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
     }
   };
 
-  const handleArchive = async (plan: LearningPlanSummary) => {
-    if (busy) return;
-    const confirmed = window.confirm(
-      `¿Archivar "${plan.title}"? Dejará de aparecer en tu lista de planes (tu progreso no se borra).`,
-    );
-    if (!confirmed) return;
+  const handleConfirmArchive = async () => {
+    if (!planToArchive || archivePlan.isPending) return;
     try {
-      await archivePlan.mutateAsync(plan.id);
+      await archivePlan.mutateAsync(planToArchive.id);
       showToast("Plan archivado", "success");
     } catch {
       showToast("No se pudo archivar el plan.", "error");
+    } finally {
+      setArchiveOpen(false);
     }
   };
 
@@ -51,21 +55,16 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-ink">
           Mis planes <span className="font-normal text-muted">({plans.length}/{MAX_OPEN_PLANS})</span>
         </h2>
-        <button
+        <Button
           type="button"
+          size="sm"
           onClick={onCreateNew}
           disabled={atLimit || busy}
           title={atLimit ? `Máximo ${MAX_OPEN_PLANS} planes activos: archivá alguno para crear otro` : undefined}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-sm font-medium transition-colors dark:border-white/10",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            atLimit || busy
-              ? "cursor-not-allowed text-muted opacity-60"
-              : "text-primary hover:bg-primary/5 dark:hover:bg-primary/10",
-          )}
+          className="rounded-xl px-3.5 shadow-glow motion-safe:hover:-translate-y-0.5"
         >
-          <Plus className="h-4 w-4" aria-hidden="true" /> Nuevo plan
-        </button>
+          <Plus className="h-4 w-4 stroke-[2.5]" aria-hidden="true" /> Nuevo plan
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -98,7 +97,10 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
               </button>
               <button
                 type="button"
-                onClick={() => handleArchive(plan)}
+                onClick={() => {
+                  setPlanToArchive(plan);
+                  setArchiveOpen(true);
+                }}
                 disabled={busy}
                 aria-label={`Archivar ${plan.title}`}
                 title="Archivar plan"
@@ -110,6 +112,22 @@ export function PlanSwitcher({ plans, onCreateNew }: PlanSwitcherProps) {
           );
         })}
       </div>
+
+      <ConfirmDialog
+        open={archiveOpen}
+        icon={Archive}
+        title="¿Archivar este plan?"
+        description={
+          <>
+            <strong className="font-semibold text-ink">{planToArchive?.title}</strong> dejará de aparecer en tu lista de
+            planes. Tu progreso no se borra.
+          </>
+        }
+        confirmLabel="Archivar"
+        isLoading={archivePlan.isPending}
+        onConfirm={handleConfirmArchive}
+        onCancel={() => setArchiveOpen(false)}
+      />
     </section>
   );
 }
