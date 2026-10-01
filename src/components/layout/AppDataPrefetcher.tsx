@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { currentPlanQuery, dashboardSummaryQuery, planListQuery, profileQuery } from "../../lib/queries";
+import { useIsRestoring, useQueryClient } from "@tanstack/react-query";
+import {
+  currentPlanQuery,
+  dashboardSummaryQuery,
+  lessonQuery,
+  planListQuery,
+  profileQuery,
+} from "../../lib/queries";
 
 /**
  * Warms the cache for every main tab as soon as the user is signed in, so moving between
@@ -11,13 +17,20 @@ import { currentPlanQuery, dashboardSummaryQuery, planListQuery, profileQuery } 
  */
 export function AppDataPrefetcher() {
   const queryClient = useQueryClient();
+  const isRestoring = useIsRestoring();
 
   useEffect(() => {
-    void queryClient.prefetchQuery(dashboardSummaryQuery);
+    // Wait for the persisted cache to be restored first; otherwise everything would be fetched again after a reload.
+    if (isRestoring) return;
+    // The next lesson is known from the dashboard summary, so it is ready before the student taps "Continuar".
+    void queryClient.prefetchQuery(dashboardSummaryQuery).then(() => {
+      const nextLessonId = queryClient.getQueryData(dashboardSummaryQuery.queryKey)?.nextLesson?.lessonId;
+      if (nextLessonId) void queryClient.prefetchQuery(lessonQuery(nextLessonId));
+    });
     void queryClient.prefetchQuery(currentPlanQuery);
     void queryClient.prefetchQuery(planListQuery);
     void queryClient.prefetchQuery(profileQuery);
-  }, [queryClient]);
+  }, [queryClient, isRestoring]);
 
   return null;
 }
