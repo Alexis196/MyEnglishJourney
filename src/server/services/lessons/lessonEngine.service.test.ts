@@ -4,7 +4,7 @@ import type { PlanDayRow } from "@myenglishjourney/shared";
 import { buildLessonSpec } from "./lessonDuration";
 import { makeLesson } from "./testFactories";
 
-const env = vi.hoisted(() => ({ LESSON_GENERATIONS_PER_DAY: 10, LESSON_PREFETCH_NEXT: true }));
+const env = vi.hoisted(() => ({ LESSON_GENERATIONS_PER_DAY: 10, LESSON_PREFETCH_NEXT: true, AI_OPENAI_FALLBACK_ENABLED: true }));
 vi.mock("../../config/env", () => ({ env }));
 
 const db = vi.hoisted(() => ({
@@ -122,6 +122,7 @@ const tick = (ms = 5) => new Promise((resolve) => setTimeout(resolve, ms));
 beforeEach(() => {
   vi.clearAllMocks();
   env.LESSON_GENERATIONS_PER_DAY = 10;
+  env.AI_OPENAI_FALLBACK_ENABLED = true;
   db.day = makeDay();
   db.previous = makeDay({ id: "day-1", day_number: 1, status: "completed", lesson_id: "l0", generation_status: "ready" });
   db.generationsStarted = 0;
@@ -249,6 +250,17 @@ describe("lessonEngineService.ensureLesson", () => {
     expect(db.saved.lessons).toHaveLength(0);
     expect(db.day.generation_status).toBe("failed");
     expect(db.saved.failedCodes).toEqual(["invalid_lesson"]);
+  });
+
+  it("with the OpenAI fallback off, retries only with Gemini and then leaves the day failed", async () => {
+    env.AI_OPENAI_FALLBACK_ENABLED = false;
+    ai.generate.mockResolvedValue(techLesson());
+    const result = await lessonEngineService.ensureLesson(supabase, USER, "day-2");
+    expect(ai.generate).toHaveBeenCalledTimes(MAX_CONTENT_ATTEMPTS - 1);
+    for (const call of ai.generate.mock.calls) expect(call[1].preferProvider).toBeUndefined();
+    expect(result.status).toBe("failed");
+    expect(db.day.generation_status).toBe("failed");
+    expect(db.saved.lessons).toHaveLength(0);
   });
 
   it("marks the day failed when every provider is down, and lets the student retry", async () => {

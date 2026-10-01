@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { aiRouter } from "../ai/index";
 import { generatedLessonSchema, normalizeGeneratedLesson, type GeneratedLesson } from "../ai/planGeneration.schema";
+import { env } from "../../config/env";
 import { logger } from "../../utils/logger";
 import { getCefrRules } from "./cefrRules";
 import type { LearningContext } from "./learningContext";
@@ -9,11 +10,14 @@ import { buildLessonSystemPrompt, buildLessonUserPrompt } from "./lessonPrompt";
 import { allIssues, repairGeneratedLesson, validateGeneratedLesson } from "./lessonValidator";
 
 /**
- * Hard cap on model calls for ONE lesson: first try, one repair try with the problems listed, and a last try on
- * the other provider. The router already retries transient provider errors (and falls back to OpenAI) inside each
+ * Hard cap on model calls for ONE lesson: first try, one repair try with the problems listed, and (only when the
+ * OpenAI fallback is enabled) a last try on the other provider. The router already retries transient provider errors (and falls back to OpenAI) inside each
  * call, and the cap guarantees there is no regeneration loop.
  */
 export const MAX_CONTENT_ATTEMPTS = 3;
+
+/** The third try exists only to use the other provider, so without OpenAI it would just repeat Gemini. */
+export const contentAttempts = (): number => (env.AI_OPENAI_FALLBACK_ENABLED ? MAX_CONTENT_ATTEMPTS : MAX_CONTENT_ATTEMPTS - 1);
 
 export class LessonValidationError extends Error {
   constructor(public readonly issues: string[]) {
@@ -44,7 +48,8 @@ export async function generateValidLesson(params: {
   let repairNotes: string[] | undefined;
   let lastHard: string[] = [];
 
-  for (let attempt = 0; attempt < MAX_CONTENT_ATTEMPTS; attempt++) {
+  const attempts = contentAttempts();
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const result = await aiRouter.generate(supabase, {
       activityType: "lesson_generation",
       systemPrompt,
@@ -54,7 +59,7 @@ export async function generateValidLesson(params: {
       temperature: 0.5,
       maxOutputTokens: maxTokensFor(spec),
       // Last resort: let the other provider have a go if the first one keeps missing the rules.
-      ...(attempt === MAX_CONTENT_ATTEMPTS - 1 ? { preferProvider: "openai" as const } : {}),
+      ...(env.AI_OPENAI_FALLBACK_ENABLED && attempt === attempts - 1 ? { preferProvider: "openai" as const } : {}),
     });
 
     const lesson = repairGeneratedLesson(normalizeGeneratedLesson(result.data), validation);

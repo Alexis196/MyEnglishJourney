@@ -78,7 +78,7 @@ describe("AIRouter", () => {
     const openai = makeProvider("openai");
     gemini.generateStructured.mockResolvedValue(fakeResult("gemini"));
 
-    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, baseDelayMs: 1, maxDelayMs: 2 });
     const result = await router.generate(fakeSupabase, fakeRequest());
 
     expect(result.provider).toBe("gemini");
@@ -94,12 +94,52 @@ describe("AIRouter", () => {
       .mockRejectedValueOnce({ status: 429, message: "Too many requests" })
       .mockResolvedValueOnce(fakeResult("gemini"));
 
-    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, baseDelayMs: 1, maxDelayMs: 2 });
     const result = await router.generate(fakeSupabase, fakeRequest());
 
     expect(result.provider).toBe("gemini");
     expect(gemini.generateStructured).toHaveBeenCalledTimes(2);
     expect(openai.generateStructured).not.toHaveBeenCalled();
+  });
+
+  describe("with the OpenAI fallback disabled (default)", () => {
+    it("never calls openai, even when gemini keeps failing", async () => {
+      allowBudget();
+      const gemini = makeProvider("gemini");
+      const openai = makeProvider("openai");
+      gemini.generateStructured.mockRejectedValue({ status: 503, message: "service unavailable" });
+
+      const router = new AIRouter(gemini, openai, { openaiEnabled: false, baseDelayMs: 1, maxDelayMs: 2, maxRetriesPerProvider: 1 });
+      await expect(router.generate(fakeSupabase, fakeRequest())).rejects.toBeInstanceOf(AIProviderFailureError);
+
+      expect(gemini.generateStructured).toHaveBeenCalledTimes(2); // original try + the allowed retry
+      expect(openai.generateStructured).not.toHaveBeenCalled();
+    });
+
+    it("ignores preferProvider=openai and openai_only mode", async () => {
+      allowBudget();
+      const gemini = makeProvider("gemini");
+      const openai = makeProvider("openai");
+      gemini.generateStructured.mockResolvedValue(fakeResult("gemini"));
+      const router = new AIRouter(gemini, openai, { openaiEnabled: false, baseDelayMs: 1, maxDelayMs: 2 });
+
+      await router.generate(fakeSupabase, { ...fakeRequest(), preferProvider: "openai" });
+      expect(openai.generateStructured).not.toHaveBeenCalled();
+
+      allowBudget({ provider_mode: "openai_only" });
+      await expect(router.generate(fakeSupabase, fakeRequest())).rejects.toBeInstanceOf(AIProviderFailureError);
+      expect(openai.generateStructured).not.toHaveBeenCalled();
+    });
+
+    it("is the default when no option is given", async () => {
+      allowBudget();
+      const gemini = makeProvider("gemini");
+      const openai = makeProvider("openai");
+      gemini.generateStructured.mockRejectedValue({ status: 429, message: "quota exceeded" });
+      const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2, maxRetriesPerProvider: 0 });
+      await expect(router.generate(fakeSupabase, fakeRequest())).rejects.toBeInstanceOf(AIProviderFailureError);
+      expect(openai.generateStructured).not.toHaveBeenCalled();
+    });
   });
 
   it("starts with openai when asked to (lesson repair), keeping gemini as its fallback", async () => {
@@ -108,7 +148,7 @@ describe("AIRouter", () => {
     const openai = makeProvider("openai");
     openai.generateStructured.mockResolvedValue(fakeResult("openai"));
 
-    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, baseDelayMs: 1, maxDelayMs: 2 });
     const result = await router.generate(fakeSupabase, { ...fakeRequest(), preferProvider: "openai" });
 
     expect(result.provider).toBe("openai");
@@ -121,7 +161,7 @@ describe("AIRouter", () => {
     const openai = makeProvider("openai");
     gemini.generateStructured.mockResolvedValue(fakeResult("gemini"));
 
-    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, baseDelayMs: 1, maxDelayMs: 2 });
     const result = await router.generate(fakeSupabase, { ...fakeRequest(), preferProvider: "openai" });
 
     expect(result.provider).toBe("gemini");
@@ -135,7 +175,7 @@ describe("AIRouter", () => {
     gemini.generateStructured.mockRejectedValue({ status: 429, message: "quota exceeded" });
     openai.generateStructured.mockResolvedValue(fakeResult("openai"));
 
-    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2, maxRetriesPerProvider: 1 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, baseDelayMs: 1, maxDelayMs: 2, maxRetriesPerProvider: 1 });
     const result = await router.generate(fakeSupabase, fakeRequest());
 
     expect(result.provider).toBe("openai");
@@ -148,7 +188,7 @@ describe("AIRouter", () => {
     const openai = makeProvider("openai");
     gemini.generateStructured.mockRejectedValue({ status: 401, message: "Invalid API key" });
 
-    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, baseDelayMs: 1, maxDelayMs: 2 });
 
     await expect(router.generate(fakeSupabase, fakeRequest())).rejects.toBeInstanceOf(AIProviderFailureError);
     expect(gemini.generateStructured).toHaveBeenCalledTimes(1);
@@ -162,7 +202,7 @@ describe("AIRouter", () => {
     gemini.generateStructured.mockRejectedValue({ status: 503, message: "down" });
     openai.generateStructured.mockRejectedValue({ status: 503, message: "down" });
 
-    const router = new AIRouter(gemini, openai, { baseDelayMs: 1, maxDelayMs: 2, maxRetriesPerProvider: 0 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, baseDelayMs: 1, maxDelayMs: 2, maxRetriesPerProvider: 0 });
 
     await expect(router.generate(fakeSupabase, fakeRequest())).rejects.toBeInstanceOf(AIProviderFailureError);
   });
@@ -190,7 +230,7 @@ describe("AIRouter", () => {
     const openai = makeProvider("openai");
     gemini.generateStructured.mockRejectedValue({ status: 429, message: "quota exceeded" });
 
-    const router = new AIRouter(gemini, openai, { maxRetriesPerProvider: 0, baseDelayMs: 1, maxDelayMs: 2 });
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true, maxRetriesPerProvider: 0, baseDelayMs: 1, maxDelayMs: 2 });
 
     await expect(router.generate(fakeSupabase, fakeRequest())).rejects.toBeInstanceOf(AIProviderFailureError);
     expect(openai.generateStructured).not.toHaveBeenCalled();
@@ -203,7 +243,7 @@ describe("AIRouter", () => {
     const openai = makeProvider("openai");
     openai.generateStructured.mockResolvedValue(fakeResult("openai"));
 
-    const router = new AIRouter(gemini, openai);
+    const router = new AIRouter(gemini, openai, { openaiEnabled: true });
     const result = await router.generate(fakeSupabase, fakeRequest());
 
     expect(result.provider).toBe("openai");
