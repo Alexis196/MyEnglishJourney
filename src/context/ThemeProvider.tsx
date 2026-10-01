@@ -22,6 +22,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // preference is applied right after mount.
   const [theme, setThemeState] = useState<Theme>("system");
   const [systemDark, setSystemDark] = useState(false);
+  // The inline script in layout.tsx already applied the right class before first paint, so this provider
+  // must not touch it until the stored preference and the OS setting have been read.
+  const [resolved, setResolved] = useState(false);
 
   useEffect(() => {
     try {
@@ -31,6 +34,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       // localStorage unavailable (private mode) — fall back to system
     }
     setSystemDark(systemPrefersDark());
+    setResolved(true);
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const listener = () => setSystemDark(media.matches);
     media.addEventListener("change", listener);
@@ -40,6 +44,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const resolvedTheme: "light" | "dark" = theme === "system" ? (systemDark ? "dark" : "light") : theme;
 
   useEffect(() => {
+    if (!resolved) return;
     const root = document.documentElement;
     const isDark = root.classList.contains("dark");
     if (isDark !== (resolvedTheme === "dark")) {
@@ -48,7 +53,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       window.setTimeout(() => root.classList.remove("theme-switching"), 320);
     }
     root.classList.toggle("dark", resolvedTheme === "dark");
-  }, [resolvedTheme]);
+  }, [resolvedTheme, resolved]);
 
   const setTheme = (next: Theme) => {
     setThemeState(next);
