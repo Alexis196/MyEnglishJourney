@@ -20,7 +20,7 @@ export function SectionRenderer({ section, lessonId }: { section: LessonSection;
     <div className="flex flex-col gap-4">
       <div>
         <Badge tone="brand">{sectionLabels[section.sectionType]}</Badge>
-        <h2 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{section.title}</h2>
+        <h2 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-ink">{section.title}</h2>
       </div>
 
       {section.content.explanation && (
@@ -31,7 +31,7 @@ export function SectionRenderer({ section, lessonId }: { section: LessonSection;
 
       {section.content.examples && section.content.examples.length > 0 && (
         <Card>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ejemplos</h3>
+          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-ink">Ejemplos</h3>
           <ul className="list-inside list-disc space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
             {section.content.examples.map((example, i) => (
               <li key={i}>{example}</li>
@@ -42,11 +42,11 @@ export function SectionRenderer({ section, lessonId }: { section: LessonSection;
 
       {section.content.vocabulary && section.content.vocabulary.length > 0 && (
         <Card>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Vocabulario nuevo</h3>
+          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-ink">Vocabulario nuevo</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {section.content.vocabulary.map((item, i) => (
-              <div key={i} className="rounded-xl bg-zinc-50 p-3 text-sm dark:bg-zinc-900/60">
-                <p className="font-medium text-zinc-900 dark:text-zinc-100">{item.term}</p>
+              <div key={i} className="rounded-xl bg-zinc-50 p-3 text-sm dark:bg-white/[0.04]">
+                <p className="font-medium text-zinc-900 dark:text-ink">{item.term}</p>
                 <p className="text-muted">{item.translation}</p>
                 {item.example && <p className="mt-1 italic text-zinc-500 dark:text-zinc-400">"{item.example}"</p>}
               </div>

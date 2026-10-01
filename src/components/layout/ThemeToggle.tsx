@@ -15,7 +15,7 @@ export function ThemeToggle() {
 
   return (
     <div
-      className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900"
+      className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-white p-1 dark:border-white/[0.06] dark:bg-surface-raised-dark"
       role="radiogroup"
       aria-label="Preferencia de tema"
     >
@@ -32,7 +32,7 @@ export function ThemeToggle() {
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
             theme === value
               ? "bg-brand-gradient text-white"
-              : "text-muted hover:bg-zinc-100 dark:hover:bg-zinc-800",
+              : "text-muted hover:bg-zinc-100 dark:hover:bg-white/[0.06]",
           )}
         >
           <Icon className="h-3.5 w-3.5" />

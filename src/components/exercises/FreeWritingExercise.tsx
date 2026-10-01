@@ -16,7 +16,7 @@ export function FreeWritingExercise({ exercise, value, onChange, disabled }: Pro
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">{exercise.content.prompt}</p>
+      <p className="text-base font-medium text-zinc-900 dark:text-ink">{exercise.content.prompt}</p>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -25,7 +25,7 @@ export function FreeWritingExercise({ exercise, value, onChange, disabled }: Pro
         placeholder="Escribí tu respuesta en inglés..."
         className={cn(
           "rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900",
-          "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100",
+          "dark:border-white/10 dark:bg-surface-raised-dark dark:text-ink",
           "focus:outline-none focus:ring-2 focus:ring-primary resize-y",
         )}
       />

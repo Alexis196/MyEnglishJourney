@@ -10,7 +10,7 @@ export function ExerciseResultFeedback({ result }: { result: ExerciseAttemptResu
 
   if (result.evaluationStatus === "ai_pending") {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-zinc-100 p-3 text-sm text-muted dark:bg-zinc-900">
+      <div className="flex items-center gap-2 rounded-xl bg-zinc-100 p-3 text-sm text-muted dark:bg-surface-raised-dark">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         Evaluando tu respuesta con IA...
       </div>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Shuffle, Send } from "lucide-react";
-import { Card } from "../../components/ui/Card";
+import { Send } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { AudioRecorder, type Recording } from "../../components/speaking/AudioRecorder";
+import { SpeakingCard } from "../../components/speaking/SpeakingCard";
 import { SpeakingFeedbackResult } from "../../components/speaking/SpeakingFeedbackResult";
 import { useSubmitSpeakingRecording } from "../../hooks/useSubmitSpeakingRecording";
 import { useToast } from "../../context/ToastProvider";
@@ -54,34 +54,33 @@ export function SpeakingLabPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Speaking Lab</h1>
+        <h1 className="text-xl font-semibold text-zinc-900 dark:text-ink">Speaking Lab</h1>
         <p className="text-sm text-muted">Practicá respondiendo en voz alta. La IA analiza lo que dijiste.</p>
       </div>
 
-      <Card>
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">{question}</p>
-          <Button variant="ghost" size="sm" onClick={handleNewQuestion} disabled={submitRecording.isPending}>
-            <Shuffle className="h-4 w-4" /> Otra pregunta
-          </Button>
+      <SpeakingCard
+        question={question}
+        onNewQuestion={handleNewQuestion}
+        newQuestionDisabled={submitRecording.isPending}
+      >
+        <div className="flex flex-col gap-4">
+          <AudioRecorder onRecordingReady={setRecording} disabled={submitRecording.isPending} />
+
+          {recording && !submitRecording.data && (
+            <Button onClick={handleSubmit} isLoading={submitRecording.isPending} disabled={!canSubmit} className="w-fit">
+              {submitRecording.isPending ? (
+                "Analizando tu respuesta..."
+              ) : (
+                <>
+                  <Send className="h-4 w-4" /> Enviar para análisis
+                </>
+              )}
+            </Button>
+          )}
         </div>
-
-        <AudioRecorder onRecordingReady={setRecording} disabled={submitRecording.isPending} />
-
-        {recording && !submitRecording.data && (
-          <Button onClick={handleSubmit} isLoading={submitRecording.isPending} disabled={!canSubmit} className="mt-4 w-fit">
-            {submitRecording.isPending ? (
-              "Analizando tu respuesta..."
-            ) : (
-              <>
-                <Send className="h-4 w-4" /> Enviar para análisis
-              </>
-            )}
-          </Button>
-        )}
-      </Card>
+      </SpeakingCard>
 
       {submitRecording.data && <SpeakingFeedbackResult result={submitRecording.data} />}
 

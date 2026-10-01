@@ -11,7 +11,7 @@ export function WeeklyChart({ data }: { data: DashboardSummary["weeklyProgress"]
 
   return (
     <Card>
-      <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Evolución semanal</h3>
+      <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-ink">Evolución semanal</h3>
       {!hasData ? (
         <EmptyState
           icon={LineChartIcon}

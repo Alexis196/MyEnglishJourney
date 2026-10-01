@@ -24,7 +24,7 @@ import { cn } from "../../utils/cn";
 import { ApiError } from "../../lib/apiClient";
 
 const selectClasses =
-  "rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary";
+  "rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-surface-raised-dark dark:text-ink focus:outline-none focus:ring-2 focus:ring-primary";
 
 const STEPS: Array<{ title: string; subtitle: string; fields: FieldPath<GeneratePlanRequest>[] }> = [
   {
@@ -55,7 +55,7 @@ function ChipToggle({ checked, label, onToggle }: { checked: boolean; label: str
         "rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         checked
           ? "border-primary bg-primary/10 text-primary"
-          : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800",
+          : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.06]",
       )}
     >
       {label}
@@ -124,17 +124,17 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
     <Card className="mx-auto max-w-2xl">
       <div className="mb-1 flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Generá tu plan de 90 días</h2>
+        <h2 className="text-base font-semibold text-zinc-900 dark:text-ink">Generá tu plan de 90 días</h2>
       </div>
       <div className="mb-4 flex items-center gap-1.5" aria-label={`Paso ${step + 1} de ${STEPS.length}`}>
         {STEPS.map((s, index) => (
           <div
             key={s.title}
-            className={cn("h-1.5 flex-1 rounded-full", index <= step ? "bg-brand-gradient" : "bg-zinc-200 dark:bg-zinc-800")}
+            className={cn("h-1.5 flex-1 rounded-full", index <= step ? "bg-brand-gradient" : "bg-zinc-200 dark:bg-white/[0.06]")}
           />
         ))}
       </div>
-      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <p className="text-sm font-medium text-zinc-900 dark:text-ink">
         {step + 1}. {currentStep.title}
       </p>
       <p className="mb-4 text-sm text-muted">{currentStep.subtitle}</p>
@@ -288,7 +288,7 @@ export function GeneratePlanForm({ onCreated, onCancel }: GeneratePlanFormProps)
                             "flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-sm transition-colors",
                             checked
                               ? "border-primary bg-primary/5 dark:bg-primary/10"
-                              : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800",
+                              : "border-zinc-200 hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.06]",
                           )}
                         >
                           <input

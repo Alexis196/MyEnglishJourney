@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Mic, Square, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "../ui/Button";
+import { cn } from "../../utils/cn";
 import { pickSupportedAudioMimeType, baseMimeType } from "../../utils/audio";
 
 export interface Recording {
@@ -98,10 +99,13 @@ export function AudioRecorder({ onRecordingReady, disabled }: AudioRecorderProps
     setElapsedSeconds(0);
   };
 
+  const formatTimer = (seconds: number) =>
+    `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+
   if (state === "recorded" && recording) {
     return (
       <div className="flex flex-col gap-3">
-        <audio controls src={recording.url} className="w-full" />
+        <audio controls src={recording.url} className="h-10 w-full max-w-md" />
         <Button variant="outline" onClick={reset} disabled={disabled} className="w-fit">
           <RotateCcw className="h-4 w-4" /> Grabar de nuevo
         </Button>
@@ -109,37 +113,56 @@ export function AudioRecorder({ onRecordingReady, disabled }: AudioRecorderProps
     );
   }
 
+  const isRecording = state === "recording";
+
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 p-6 dark:border-zinc-700">
-      {state === "recording" ? (
-        <>
-          <motion.div
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: 1.2, repeat: Infinity }}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white"
-          >
-            <Mic className="h-6 w-6" />
-          </motion.div>
-          <p className="text-sm text-muted">Grabando... {elapsedSeconds}s</p>
-          <Button variant="outline" onClick={stopRecording}>
-            <Square className="h-4 w-4" /> Detener
-          </Button>
-        </>
+    <div className="flex flex-col gap-3">
+      {/* Reserved waveform + timer zone: it keeps its height so the card does not jump when recording starts. */}
+      <div className="flex min-h-12 items-center gap-3" aria-live="polite">
+        <WaveformBars active={isRecording} />
+        {isRecording && (
+          <span className="shrink-0 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold tabular-nums text-red-300">
+            <span className="sr-only">Grabando: </span>
+            {formatTimer(elapsedSeconds)}
+          </span>
+        )}
+      </div>
+
+      {isRecording ? (
+        <Button variant="outline" onClick={stopRecording} className="w-fit">
+          <Square className="h-4 w-4" /> Detener
+        </Button>
       ) : (
-        <>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Mic className="h-6 w-6" />
-          </div>
-          <Button onClick={startRecording} isLoading={state === "requesting"} disabled={disabled}>
-            Empezar a grabar
-          </Button>
-          {errorMessage && (
-            <p className="text-sm text-red-500" role="alert">
-              {errorMessage}
-            </p>
-          )}
-        </>
+        <Button onClick={startRecording} isLoading={state === "requesting"} disabled={disabled} className="w-fit">
+          <Mic className="h-4 w-4" aria-hidden="true" /> Empezar a grabar
+        </Button>
       )}
+
+      {errorMessage && (
+        <p className="text-sm text-red-400" role="alert">
+          {errorMessage}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const WAVE_HEIGHTS = [30, 55, 40, 75, 50, 90, 60, 35, 80, 45, 70, 55, 95, 40, 65, 30, 75, 50, 85, 45, 60, 35, 70, 40];
+
+/** Purely decorative bars: calm when idle, animated while recording. */
+function WaveformBars({ active }: { active: boolean }) {
+  return (
+    <div aria-hidden="true" className="flex h-10 flex-1 items-center gap-[3px]">
+      {WAVE_HEIGHTS.map((height, index) => (
+        <span
+          key={index}
+          style={{ height: `${height}%`, animationDelay: `${(index % 8) * 90}ms` }}
+          className={cn(
+            "w-[3px] origin-center rounded-full transition-colors",
+            active ? "bg-primary motion-safe:animate-wave-bar" : "bg-white/15",
+          )}
+        />
+      ))}
     </div>
   );
 }

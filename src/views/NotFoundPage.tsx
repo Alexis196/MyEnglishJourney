@@ -7,7 +7,7 @@ export function NotFoundPage() {
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-3 bg-surface-light text-center dark:bg-surface-dark">
       <Compass className="h-10 w-10 text-primary" aria-hidden="true" />
-      <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Página no encontrada</h1>
+      <h1 className="text-xl font-semibold text-zinc-900 dark:text-ink">Página no encontrada</h1>
       <p className="text-sm text-muted">La página que buscás no existe o fue movida.</p>
       <Link
         href="/dashboard"

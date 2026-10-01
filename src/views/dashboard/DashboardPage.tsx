@@ -3,12 +3,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Clock, Flame, Rocket, Sparkles } from "lucide-react";
 import { useDashboardSummary } from "../../hooks/useDashboardSummary";
-import { useAuth } from "../../context/AuthProvider";
 import { CardSkeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Button } from "../../components/ui/Button";
 import { HeroCard } from "../../components/dashboard/HeroCard";
-import { StatTile } from "../../components/dashboard/StatTile";
+import { StatCard } from "../../components/dashboard/StatCard";
 import { RecentErrorsList } from "../../components/dashboard/RecentErrorsList";
 import { WeeklyChart } from "../../components/dashboard/WeeklyChart";
 import { formatMinutes } from "../../utils/formatDate";
@@ -22,10 +21,8 @@ const itemVariants = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } 
 
 export function DashboardPage() {
   const { data: summary, isLoading } = useDashboardSummary();
-  const { user } = useAuth();
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
-  const fullName = user?.user_metadata?.full_name as string | undefined;
 
   if (isLoading) {
     return (
@@ -61,14 +58,14 @@ export function DashboardPage() {
       className="flex flex-col gap-4"
     >
       <motion.div variants={itemVariants}>
-        <HeroCard summary={summary} fullName={fullName} />
+        <HeroCard summary={summary} />
       </motion.div>
 
       <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatTile icon={Flame} label="Racha actual" value={`${summary.currentStreak} días`} />
-        <StatTile icon={Clock} label="Tiempo estudiado" value={formatMinutes(summary.totalMinutesStudied)} tone="secondary" />
-        <StatTile icon={Sparkles} label="Palabras aprendidas" value={String(summary.wordsLearnedCount)} />
-        <StatTile
+        <StatCard icon={Flame} label="Racha actual" value={`${summary.currentStreak} días`} />
+        <StatCard icon={Clock} label="Tiempo estudiado" value={formatMinutes(summary.totalMinutesStudied)} tone="secondary" />
+        <StatCard icon={Sparkles} label="Palabras aprendidas" value={String(summary.wordsLearnedCount)} />
+        <StatCard
           icon={Flame}
           label="Mejor racha"
           value={`${summary.longestStreak} días`}

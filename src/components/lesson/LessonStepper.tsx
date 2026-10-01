@@ -38,7 +38,7 @@ export function LessonStepper({ lesson, currentIndex, onNavigate, isSaving }: Le
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-800">
+      <div className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-white/[0.06]">
         <Button
           variant="outline"
           onClick={() => onNavigate(currentIndex - 1, false)}

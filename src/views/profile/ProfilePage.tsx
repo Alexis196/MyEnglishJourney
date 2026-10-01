@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateProfileSchema, CEFR_LEVELS, type UpdateProfileInput } from "@myenglishjourney/shared";
-import { Card } from "../../components/ui/Card";
+import { ProfileCard } from "../../components/profile/ProfileCard";
+import { useAuth } from "../../context/AuthProvider";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { CardSkeleton } from "../../components/ui/Skeleton";
@@ -15,6 +16,7 @@ export function ProfilePage() {
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   const {
     register,
@@ -53,11 +55,13 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="max-w-lg">
-      <h1 className="mb-1 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Perfil</h1>
-      <p className="mb-6 text-sm text-muted">Actualizá tu información y nivel estimado.</p>
-
-      <Card>
+    <div className="mx-auto max-w-3xl">
+      <ProfileCard
+        title="Perfil"
+        subtitle="Actualizá tu información y nivel estimado."
+        displayName={profile?.fullName || user?.email || "Tu perfil"}
+        email={user?.email}
+      >
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
           <Input label="Nombre completo" error={errors.fullName?.message} {...register("fullName")} />
 
@@ -67,7 +71,7 @@ export function ProfilePage() {
             </label>
             <select
               id="currentLevel"
-              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-surface-raised-dark dark:text-ink focus:outline-none focus:ring-2 focus:ring-primary"
               {...register("currentLevel")}
             >
               {CEFR_LEVELS.map((level) => (
@@ -84,7 +88,7 @@ export function ProfilePage() {
             </label>
             <select
               id="explanationLanguage"
-              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-surface-raised-dark dark:text-ink focus:outline-none focus:ring-2 focus:ring-primary"
               {...register("explanationLanguage")}
             >
               <option value="es">Español</option>
@@ -96,7 +100,7 @@ export function ProfilePage() {
             Guardar cambios
           </Button>
         </form>
-      </Card>
+      </ProfileCard>
     </div>
   );
 }
