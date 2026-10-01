@@ -13,3 +13,4 @@ export * from "./schemas/dashboard.schema";
 export * from "./schemas/speaking.schema";
 
 export * from "./types/database.types";
+export * from "./password";

@@ -11,6 +11,7 @@ import { AuthInput } from "../../components/auth/AuthInput";
 import { AuthSubmitButton } from "../../components/auth/AuthSubmitButton";
 import { AuthAlert } from "../../components/auth/AuthAlert";
 import { AuthSwitch } from "../../components/auth/AuthSwitch";
+import { PasswordRequirements } from "../../components/auth/PasswordRequirements";
 import { supabase } from "../../lib/supabaseClient";
 import { useToast } from "../../context/ToastProvider";
 
@@ -22,8 +23,11 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) });
+
+  const passwordValue = watch("password") ?? "";
 
   const onSubmit = async (data: RegisterInput) => {
     setServerError(null);
@@ -73,6 +77,7 @@ export function RegisterPage() {
           error={errors.password?.message}
           {...register("password")}
         />
+        {passwordValue.length > 0 && <PasswordRequirements value={passwordValue} />}
         {serverError && <AuthAlert message={serverError} />}
         <AuthSubmitButton isLoading={isSubmitting} loadingText="Creando cuenta..." className="mt-1">
           Crear cuenta

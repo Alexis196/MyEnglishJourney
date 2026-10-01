@@ -10,6 +10,7 @@ import { AuthLayout } from "../../components/layout/AuthLayout";
 import { AuthInput } from "../../components/auth/AuthInput";
 import { AuthSubmitButton } from "../../components/auth/AuthSubmitButton";
 import { AuthAlert } from "../../components/auth/AuthAlert";
+import { PasswordRequirements } from "../../components/auth/PasswordRequirements";
 import { supabase } from "../../lib/supabaseClient";
 import { useToast } from "../../context/ToastProvider";
 
@@ -21,8 +22,11 @@ export function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ResetPasswordInput>({ resolver: zodResolver(resetPasswordSchema) });
+
+  const passwordValue = watch("password") ?? "";
 
   const onSubmit = async (data: ResetPasswordInput) => {
     setServerError(null);
@@ -48,6 +52,7 @@ export function ResetPasswordPage() {
           error={errors.password?.message}
           {...register("password")}
         />
+        {passwordValue.length > 0 && <PasswordRequirements value={passwordValue} />}
         {serverError && <AuthAlert message={serverError} />}
         <AuthSubmitButton isLoading={isSubmitting} loadingText="Guardando..." className="mt-1">
           Guardar contraseña
