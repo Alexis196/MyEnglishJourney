@@ -12,6 +12,21 @@ export interface RecordErrorInput {
 }
 
 export const errorJournalRepository = {
+  /** The student's most frequent unresolved mistakes, to bring them up naturally in practice.
+   * Only mistakes made in a sentence (grammar/syntax/vocabulary) are useful for conversation. */
+  async listOpen(supabase: SupabaseClient, userId: string, limit = 5): Promise<Array<{ original_text: string; corrected_text: string }>> {
+    const { data, error } = await supabase
+      .from("error_journal")
+      .select("original_text, corrected_text")
+      .eq("user_id", userId)
+      .eq("resolved", false)
+      .order("frequency_count", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []) as Array<{ original_text: string; corrected_text: string }>;
+  },
+
   /**
    * One row per distinct mistake: repeating the same mistake bumps `frequency_count` instead of adding a
    * duplicate row. (Full attempt data stays in exercise_attempts; this table feeds the dashboard's "recent errors".)

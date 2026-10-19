@@ -25,6 +25,12 @@ const envSchema = z.object({
   // Safety limit for AI lesson generations a single user can start per rolling 24h. It caps cost only —
   // it never gates pedagogical progress (finishing a lesson always unlocks the next one).
   LESSON_GENERATIONS_PER_DAY: z.coerce.number().int().min(1).max(500).default(10),
+  // Live (real-time) speaking practice. The model comes from the Live API docs; the cost is a conservative
+  // per-minute estimate (audio in 0.005 + audio out 0.018 USD/min at the time of writing) used for the budget.
+  GEMINI_LIVE_MODEL: z.string().default("gemini-3.8-live"),
+  LIVE_SESSION_MAX_SECONDS: z.coerce.number().int().min(30).max(900).default(300),
+  LIVE_SESSIONS_PER_DAY: z.coerce.number().int().min(1).max(500).default(20),
+  LIVE_COST_PER_MINUTE_USD: z.coerce.number().min(0).max(5).default(0.023),
   // Prepare the next lesson in the background right after a lesson is completed ("false" to disable).
   LESSON_PREFETCH_NEXT: z
     .enum(["true", "false"])

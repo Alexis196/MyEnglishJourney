@@ -16,3 +16,5 @@ export * from "./types/database.types";
 export * from "./password";
 export * from "./constants/speakingQuestions";
 export * from "./constants/lessonStages";
+export * from "./schemas/liveSpeaking.schema";
+export * from "./constants/liveScenarios";
