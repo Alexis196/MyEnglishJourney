@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GoogleGenAI, Modality, type LiveServerMessage, type Session } from "@google/genai";
+import { LIVE_PLAYBACK_RATE } from "@myenglishjourney/shared";
 import type {
   EndLiveSpeakingInput,
   EndLiveSpeakingResponse,
@@ -25,6 +26,8 @@ export interface LiveConversationState {
   secondsLeft: number;
   scenarioTitle: string | null;
   muted: boolean;
+  /** Audio playback speed (1 = normal). */
+  playbackRate: number;
   result: EndLiveSpeakingResponse | null;
   error: string | null;
 }
@@ -35,6 +38,7 @@ const INITIAL: LiveConversationState = {
   secondsLeft: 0,
   scenarioTitle: null,
   muted: false,
+  playbackRate: 1,
   result: null,
   error: null,
 };
@@ -159,7 +163,10 @@ export function useLiveConversation() {
 
         const started = await apiClient.post<StartLiveSpeakingResponse>("/api/speaking/live/start", input);
         sessionIdRef.current = started.sessionId;
+        const rate = LIVE_PLAYBACK_RATE[input.pace];
         playerRef.current = createAudioPlayer();
+        playerRef.current.setRate(rate);
+        setState((prev) => ({ ...prev, playbackRate: rate }));
 
         const ai = new GoogleGenAI({ apiKey: started.token, httpOptions: { apiVersion: "v1alpha" } });
         session = await ai.live.connect({
@@ -224,6 +231,11 @@ export function useLiveConversation() {
     return apiClient.post<LiveTurnTranslation>(`/api/speaking/live/${sessionId}/translate`, { text });
   }, []);
 
+  const setPlaybackRate = useCallback((rate: number) => {
+    playerRef.current?.setRate(rate);
+    setState((prev) => ({ ...prev, playbackRate: rate }));
+  }, []);
+
   const toggleMute = useCallback(() => {
     setState((prev) => {
       const muted = !prev.muted;
@@ -244,5 +256,5 @@ export function useLiveConversation() {
     };
   }, [releaseResources]);
 
-  return { state, start, end, toggleMute, translate, reset };
+  return { state, start, end, toggleMute, setPlaybackRate, translate, reset };
 }

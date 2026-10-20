@@ -47,12 +47,13 @@ const ai = vi.hoisted(() => ({ generate: vi.fn() }));
 vi.mock("./ai/index", () => ({
   aiRouter: ai,
   AIUsageService: { checkBudget: vi.fn(async () => db.budget) },
-  buildLiveTutorInstruction: vi.fn(() => "INSTRUCTION"),
+  buildLiveTutorInstruction: buildInstruction,
   buildLiveFeedbackSystemPrompt: vi.fn(() => "SYSTEM"),
   buildLiveFeedbackUserPrompt: vi.fn(() => "USER"),
   buildLiveTranslationSystemPrompt: vi.fn((level: string) => `TRANSLATE_${level}`),
 }));
 const createLiveToken = vi.hoisted(() => vi.fn());
+const buildInstruction = vi.hoisted(() => vi.fn(() => "INSTRUCTION"));
 vi.mock("./ai/liveToken", () => ({ createLiveToken }));
 vi.mock("../repositories/aiUsageLog.repository", () => ({
   aiUsageLogRepository: {
@@ -165,6 +166,16 @@ describe("live speaking: starting", () => {
     expect(createLiveToken).toHaveBeenCalledWith(
       expect.objectContaining({ model: "gemini-3.8-live", maxSeconds: 300, systemInstruction: "INSTRUCTION", voice: "Kore" }),
     );
+  });
+
+  it("uses the chosen voice and pace, and falls back to the default voice for an unknown one", async () => {
+    const chosen = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false, voice: "Puck", pace: "very_slow" });
+    expect(chosen.voice).toBe("Puck");
+    expect(createLiveToken).toHaveBeenLastCalledWith(expect.objectContaining({ voice: "Puck" }));
+    expect(buildInstruction).toHaveBeenLastCalledWith(expect.objectContaining({ pace: "very_slow" }));
+
+    const fallback = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false, voice: "NotAVoice", pace: "auto" });
+    expect(fallback.voice).toBe("Kore");
   });
 
   it("starts a role-play from a known scenario and rejects an unknown one", async () => {

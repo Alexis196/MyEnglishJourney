@@ -1,4 +1,4 @@
-import type { CefrLevel, LiveScenario, LiveTurn } from "@myenglishjourney/shared";
+import type { CefrLevel, LivePace, LiveScenario, LiveTurn } from "@myenglishjourney/shared";
 import { TUTOR_PERSONA } from "./systemPrompts";
 
 export interface LiveTutorProfile {
@@ -20,13 +20,24 @@ const LEVEL_STYLE: Record<CefrLevel, string> = {
   C2: "Speak naturally at native speed with idiomatic, precise language. Push for nuance, register and subtlety.",
 };
 
+const PACE_INSTRUCTION: Record<Exclude<LivePace, "auto">, string> = {
+  very_slow:
+    "PACE: speak EXTREMELY slowly, at roughly 90 words per minute, like a teacher dictating to a complete beginner. Stretch the vowels a little, pronounce every word separately and distinctly, and leave a full second of silence between phrases and between sentences. Say at most 6 to 8 words before each pause. This overrides any faster pace suggested by the level notes.",
+  slow: "PACE: speak slowly, at roughly 115 words per minute, noticeably slower than a normal conversation. Pronounce each word clearly and leave a short pause between sentences. This overrides any faster pace suggested by the level notes.",
+  normal: "PACE: speak at a normal, natural conversational pace. This overrides any slower pace suggested by the level notes.",
+};
+
 export function buildLiveTutorInstruction(params: {
   profile: LiveTutorProfile;
   scenario?: LiveScenario | undefined;
   correctWhileTalking: boolean;
   maxSeconds: number;
+  /** Omitted or "auto": the pace described for the student's level applies. */
+  pace?: LivePace | undefined;
 }): string {
-  const { profile, scenario, correctWhileTalking, maxSeconds } = params;
+  const { profile, scenario, correctWhileTalking, maxSeconds, pace = "auto" } = params;
+  const paceLine = pace === "auto" ? "" : `${PACE_INSTRUCTION[pace]}
+`;
 
   const known: string[] = [];
   if (profile.profession) known.push(`Occupation: ${profile.profession}`);
@@ -64,7 +75,7 @@ You are now holding a LIVE SPOKEN conversation with the student to practise spea
 
 STUDENT LEVEL (CEFR): ${profile.level}.
 ${LEVEL_STYLE[profile.level]}
-
+${paceLine}
 ${situation}
 
 ${aboutStudent}

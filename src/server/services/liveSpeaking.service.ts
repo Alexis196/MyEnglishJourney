@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   CEFR_LEVELS,
+  DEFAULT_LIVE_VOICE,
   getLiveScenario,
+  isLiveVoice,
   liveSpeakingFeedbackSchema,
   liveTurnTranslationSchema,
   type CefrLevel,
@@ -32,8 +34,6 @@ import {
 import { createLiveToken } from "./ai/liveToken";
 import { resolvePersonalization } from "./lessons/learningContext";
 
-/** Voice used by the tutor. Prebuilt Gemini voice, kept constant so the tutor sounds the same every time. */
-const TUTOR_VOICE = "Kore";
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** A session still active this long after its maximum length can no longer be running. */
 const STALE_GRACE_SECONDS = 180;
@@ -127,8 +127,10 @@ export const liveSpeakingService = {
       scenario,
       correctWhileTalking: input.correctWhileTalking,
       maxSeconds,
+      pace: input.pace,
     });
 
+    const voice = isLiveVoice(input.voice) ? input.voice : DEFAULT_LIVE_VOICE;
     const model = env.GEMINI_LIVE_MODEL;
     const session = await liveSpeakingSessionRepository.create(supabase, {
       userId,
@@ -140,12 +142,12 @@ export const liveSpeakingService = {
     });
 
     try {
-      const token = await createLiveToken({ model, maxSeconds, systemInstruction: instruction, voice: TUTOR_VOICE });
+      const token = await createLiveToken({ model, maxSeconds, systemInstruction: instruction, voice });
       return {
         sessionId: session.id,
         token,
         model,
-        voice: TUTOR_VOICE,
+        voice,
         systemInstruction: instruction,
         maxSeconds,
         scenarioTitle: scenario?.title ?? null,
