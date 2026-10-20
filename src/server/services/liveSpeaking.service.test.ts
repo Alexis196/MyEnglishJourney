@@ -32,6 +32,7 @@ const db = vi.hoisted(() => ({
   journal: [] as Array<{ originalText: string; sourceType: string }>,
   budget: { allowed: true, monthToDateSpendUsd: 0, settings: { hard_block_at_budget: true, monthly_budget_usd: 3 } },
   tokenFails: false,
+  tokenError: "gemini down",
   feedbackFails: false,
   feedback: {
     summary: "Hablaron de café.",
@@ -52,7 +53,7 @@ vi.mock("./ai/index", () => ({
 }));
 vi.mock("./ai/liveToken", () => ({
   createLiveToken: vi.fn(async () => {
-    if (db.tokenFails) throw new Error("gemini down");
+    if (db.tokenFails) throw new Error(db.tokenError);
     return "auth_tokens/abc";
   }),
 }));
@@ -138,6 +139,8 @@ beforeEach(() => {
   db.journal = [];
   db.budget = { allowed: true, monthToDateSpendUsd: 0, settings: { hard_block_at_budget: true, monthly_budget_usd: 3 } };
   db.tokenFails = false;
+  db.tokenError = "gemini down";
+  env.LIVE_COST_PER_MINUTE_USD = 0.023;
   db.feedbackFails = false;
   ai.generate.mockReset();
   ai.generate.mockImplementation(async () => {
@@ -183,6 +186,15 @@ describe("live speaking: starting", () => {
     await expect(liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false })).rejects.toMatchObject({ code: "live_unavailable" });
     expect(db.sessions[0]).toMatchObject({ status: "failed", estimated_cost_usd: 0 });
     expect(db.usage).toHaveLength(0);
+  });
+
+  it("reports an exhausted free-tier quota in plain words", async () => {
+    db.tokenFails = true;
+    db.tokenError = "429 RESOURCE_EXHAUSTED: quota exceeded";
+    await expect(liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false })).rejects.toMatchObject({
+      code: "live_quota",
+      statusCode: 429,
+    });
   });
 
   it("settles abandoned conversations at their full length before opening a new one", async () => {
@@ -263,6 +275,16 @@ describe("live speaking: ending", () => {
 });
 
 describe("live cost estimate", () => {
+  it("is free on the Gemini free tier: nothing is charged to the budget, even right at the limit", async () => {
+    env.LIVE_COST_PER_MINUTE_USD = 0;
+    db.budget = { allowed: true, monthToDateSpendUsd: 2.99, settings: { hard_block_at_budget: true, monthly_budget_usd: 3 } };
+    const started = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    db.sessions[0]!.started_at = new Date(Date.now() - 90_000).toISOString();
+    await liveSpeakingService.end(supabase, USER, started.sessionId, { durationSeconds: 80, turns });
+    expect(db.usage[0]).toMatchObject({ costUsd: 0, status: "success" });
+    expect(estimateLiveCostUsd(300)).toBe(0);
+  });
+
   it("is proportional to the time and uses the configured per-minute rate", () => {
     expect(estimateLiveCostUsd(60)).toBeCloseTo(0.023, 6);
     expect(estimateLiveCostUsd(300)).toBeCloseTo(0.115, 6);

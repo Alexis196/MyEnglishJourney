@@ -155,6 +155,10 @@ export const liveSpeakingService = {
         aiFeedback: null,
         estimatedCostUsd: 0,
       });
+      if (/429|quota|rate.?limit|resource.?exhausted/i.test(String(error))) {
+        // The free tier has its own limits: say so instead of a generic failure.
+        throw new AppError("Se agotó el cupo gratuito de Gemini por ahora. Probá de nuevo en unos minutos.", 429, "live_quota");
+      }
       throw new AppError("No pudimos iniciar la conversación. Probá de nuevo en un momento.", 503, "live_unavailable");
     }
   },
