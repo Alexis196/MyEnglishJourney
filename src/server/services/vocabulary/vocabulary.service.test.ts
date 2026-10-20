@@ -129,6 +129,12 @@ describe("vocabulary: list and stats", () => {
     expect(stats).toEqual({ total: 3, pending: 1, learned: 1, difficult: 1, due: 2 });
   });
 
+  it("a word saved a moment ago is already due, even if the database stamped it a few milliseconds ahead", async () => {
+    db.rows.push(row({ id: "fresh", term: "fresh", vocabulary_reviews: { ease_factor: 2.5, interval_days: 1, repetitions: 0, last_grade: null, next_review_at: new Date(Date.now() + 150).toISOString() } }));
+    const { items } = await vocabularyService.list(supabase, USER);
+    expect(items[0]!.review.due).toBe(true);
+  });
+
   it("treats a word without review state as due, so it can still be studied", async () => {
     db.rows.push(row({ id: "x", term: "x", vocabulary_reviews: null }));
     const { items } = await vocabularyService.list(supabase, USER);

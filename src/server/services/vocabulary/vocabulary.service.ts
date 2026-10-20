@@ -25,6 +25,8 @@ import { scheduleReview } from "@myenglishjourney/shared";
 /** Words offered per detection and per study batch: enough to be useful, few enough to finish. */
 const MAX_DETECTED = 12;
 const REVIEW_BATCH = 20;
+/** A word saved just now must be due right away: the database stamps it a few milliseconds after the server read the clock. */
+const DUE_TOLERANCE_MS = 60_000;
 const DEFAULT_REVIEW = { ease_factor: 2.5, interval_days: 1, repetitions: 0, last_grade: null as number | null };
 
 function asLevel(value: string | null | undefined): CefrLevel {
@@ -48,7 +50,7 @@ export function toSavedWord(row: VocabularyRow, now = new Date()): SavedWord {
       intervalDays: review?.interval_days ?? DEFAULT_REVIEW.interval_days,
       repetitions: review?.repetitions ?? DEFAULT_REVIEW.repetitions,
       lastGrade: review?.last_grade ?? DEFAULT_REVIEW.last_grade,
-      due: new Date(nextReviewAt).getTime() <= now.getTime(),
+      due: new Date(nextReviewAt).getTime() <= now.getTime() + DUE_TOLERANCE_MS,
     },
   };
 }
