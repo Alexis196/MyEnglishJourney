@@ -70,6 +70,13 @@ describe("live feedback prompts", () => {
     expect(buildLiveFeedbackSystemPrompt("en")).toContain("Write everything in English");
   });
 
+  it("keeps polite-but-correct phrasing out of the error list", () => {
+    const system = buildLiveFeedbackSystemPrompt("es");
+    expect(system).toContain("ONLY real grammar or vocabulary mistakes");
+    expect(system).toContain("is NOT a mistake");
+    expect(system).toContain("single corrected sentence");
+  });
+
   it("labels each side of the conversation", () => {
     const user = buildLiveFeedbackUserPrompt({
       level: "A2",

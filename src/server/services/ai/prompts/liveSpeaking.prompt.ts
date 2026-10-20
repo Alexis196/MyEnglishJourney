@@ -93,7 +93,7 @@ You are analysing text, not audio: never claim to have evaluated pronunciation, 
 Respond with ONLY a single JSON object (no markdown, no code fences) matching exactly this shape:
 {
   "summary": string (2-3 sentences: what the conversation was about and how it went),
-  "corrections": [{ "original": string, "corrected": string, "explanation": string }] (at most 5, the most useful real mistakes by the student, quoting their words),
+  "corrections": [{ "original": string, "corrected": string, "explanation": string }] (at most 5, ONLY real grammar or vocabulary mistakes by the student, quoting their words),
   "usefulPhrases": [{ "phrase": string, "meaning": string }] (at most 5 natural phrases worth learning for this topic and level),
   "strengths": string (what the student did well, specific),
   "nextStep": string (one concrete thing to practise next)
@@ -101,6 +101,8 @@ Respond with ONLY a single JSON object (no markdown, no code fences) matching ex
 
 Rules:
 - Quote the student's exact words in "original". Never invent mistakes: if there are none, return an empty corrections array.
+- "corrections" is only for sentences that are WRONG (grammar, word choice, missing words). A sentence that is correct but blunt, informal or less polite (for example "I want a coffee" when "I'd like a coffee" would be more natural) is NOT a mistake: never put it in "corrections"; mention the more natural phrasing in "usefulPhrases" instead.
+- Each correction must change something that is actually wrong: "corrected" must differ from "original" in grammar or vocabulary, and must be a single corrected sentence (no alternatives separated by "/").
 - Match your advice to the student's CEFR level; do not demand structures far above it.
 - If the student barely spoke, say so kindly in the summary and keep the other fields minimal.
 ${language}`;
