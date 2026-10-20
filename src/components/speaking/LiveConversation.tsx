@@ -14,6 +14,7 @@ import {
 } from "@myenglishjourney/shared";
 import { useLiveConversation, type DisplayTurn } from "../../hooks/useLiveConversation";
 import { useLivePreferences } from "../../hooks/useLivePreferences";
+import { SaveWordButton } from "../vocabulary/SaveWordButton";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { cn } from "../../utils/cn";
@@ -274,9 +275,15 @@ function Transcript({ turns, onTranslate }: { turns: DisplayTurn[]; onTranslate?
                 {translation.data.keyWords.length > 0 && (
                   <ul className="mt-1.5 flex flex-wrap gap-1.5">
                     {translation.data.keyWords.map((item) => (
-                      <li key={item.word} className="rounded-md bg-card px-2 py-0.5 text-xs">
+                      <li key={item.word} className="flex items-center gap-1 rounded-md bg-card py-0.5 pl-2 pr-0.5 text-xs">
                         <span className="font-medium text-ink">{item.word}</span>
                         <span className="text-muted"> = {item.meaning}</span>
+                        <SaveWordButton
+                          term={item.word}
+                          translation={item.meaning}
+                          exampleSentence={turn.text.length <= 300 ? turn.text : undefined}
+                          source="live"
+                        />
                       </li>
                     ))}
                   </ul>
@@ -342,9 +349,12 @@ function LiveResult({ result, turnsCount, onAgain }: { result: EndLiveSpeakingRe
               <h3 className="mb-2 text-sm font-semibold text-ink">Frases útiles</h3>
               <ul className="flex flex-col gap-1.5 text-sm">
                 {feedback.usefulPhrases.map((item, index) => (
-                  <li key={index}>
-                    <span className="font-medium text-ink">{item.phrase}</span>
-                    <span className="text-muted"> — {item.meaning}</span>
+                  <li key={index} className="flex items-center gap-1.5">
+                    <span>
+                      <span className="font-medium text-ink">{item.phrase}</span>
+                      <span className="text-muted"> — {item.meaning}</span>
+                    </span>
+                    <SaveWordButton term={item.phrase} translation={item.meaning} source="live" />
                   </li>
                 ))}
               </ul>

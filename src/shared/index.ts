@@ -19,3 +19,5 @@ export * from "./constants/lessonStages";
 export * from "./schemas/liveSpeaking.schema";
 export * from "./constants/liveScenarios";
 export * from "./constants/liveVoices";
+export * from "./schemas/vocabulary.schema";
+export * from "./spacedRepetition";
