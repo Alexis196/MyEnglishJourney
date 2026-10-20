@@ -92,6 +92,18 @@ describe("live tutor instruction", () => {
     expect(text).toContain("STAY IN YOUR ROLE");
   });
 
+  it("applies the requested pace and lets it override the level's default", () => {
+    const at = (pace?: "auto" | "very_slow" | "slow" | "normal") =>
+      buildLiveTutorInstruction({ profile: { ...base, level: "B2" }, correctWhileTalking: false, maxSeconds: 300, pace });
+    expect(at("very_slow")).toContain("speak EXTREMELY slowly");
+    expect(at("slow")).toContain("PACE: speak slowly, at roughly 115 words per minute");
+    expect(at("normal")).toContain("normal, natural conversational pace");
+    expect(at("very_slow")).toContain("overrides");
+    // Without a pace (or "auto") the level notes decide, and no PACE line is added.
+    expect(at()).not.toContain("PACE:");
+    expect(at("auto")).not.toContain("PACE:");
+  });
+
   it("never claims to judge pronunciation and keeps turns short", () => {
     const text = buildLiveTutorInstruction({ profile: base, correctWhileTalking: false, maxSeconds: 300 });
     expect(text).toContain("cannot judge pronunciation");

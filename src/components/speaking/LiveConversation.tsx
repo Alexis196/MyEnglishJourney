@@ -4,12 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Info, Languages, Loader2, Mic, MicOff, PhoneOff, Radio } from "lucide-react";
 import {
   CEFR_LEVELS,
+  LIVE_PACES,
+  LIVE_PLAYBACK_RATES,
   LIVE_SCENARIOS,
+  LIVE_VOICES,
   type CefrLevel,
   type EndLiveSpeakingResponse,
   type LiveTurnTranslation,
 } from "@myenglishjourney/shared";
 import { useLiveConversation, type DisplayTurn } from "../../hooks/useLiveConversation";
+import { useLivePreferences } from "../../hooks/useLivePreferences";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { cn } from "../../utils/cn";
@@ -27,19 +31,16 @@ function formatClock(totalSeconds: number): string {
 }
 
 export function LiveConversation({ level }: LiveConversationProps) {
-  const { state, start, end, toggleMute, translate, reset } = useLiveConversation();
+  const { state, start, end, toggleMute, setPlaybackRate, translate, reset } = useLiveConversation();
   const [choice, setChoice] = useState<string>(MODE_FREE);
-  const [correctWhileTalking, setCorrectWhileTalking] = useState(false);
+  const { preferences, update } = useLivePreferences();
 
   const rank = level ? CEFR_LEVELS.indexOf(level) : 0;
   const scenarios = useMemo(() => LIVE_SCENARIOS.filter((scenario) => CEFR_LEVELS.indexOf(scenario.from) <= rank + 1), [rank]);
 
   const handleStart = () => {
-    void start(
-      choice === MODE_FREE
-        ? { mode: "free", correctWhileTalking }
-        : { mode: "scenario", scenarioId: choice, correctWhileTalking },
-    );
+    const settings = { correctWhileTalking: preferences.correctWhileTalking, voice: preferences.voice, pace: preferences.pace };
+    void start(choice === MODE_FREE ? { mode: "free", ...settings } : { mode: "scenario", scenarioId: choice, ...settings });
   };
 
   if (state.phase === "idle" || state.phase === "error") {
@@ -73,11 +74,37 @@ export function LiveConversation({ level }: LiveConversationProps) {
             </div>
           </fieldset>
 
+          <fieldset className="mt-4">
+            <legend className="text-sm font-medium text-ink">Voz del tutor</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {LIVE_VOICES.map((voice) => (
+                <Chip key={voice.id} selected={preferences.voice === voice.id} onSelect={() => update({ voice: voice.id })}>
+                  {voice.id} <span className="text-muted">· {voice.trait}</span>
+                </Chip>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-4">
+            <legend className="text-sm font-medium text-ink">Velocidad al hablar</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {LIVE_PACES.map((pace) => (
+                <Chip key={pace.id} selected={preferences.pace === pace.id} onSelect={() => update({ pace: pace.id })}>
+                  {pace.label}
+                </Chip>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted">
+              Si te habla muy rápido, elegí “Muy lento”: además de pedirle que hable pausado, reproduce el audio más lento (la voz se
+              escucha un poco más grave). Podés cambiarlo durante la charla.
+            </p>
+          </fieldset>
+
           <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm text-ink-2">
             <input
               type="checkbox"
-              checked={correctWhileTalking}
-              onChange={(event) => setCorrectWhileTalking(event.target.checked)}
+              checked={preferences.correctWhileTalking}
+              onChange={(event) => update({ correctWhileTalking: event.target.checked })}
               className="mt-0.5 h-4 w-4 accent-primary"
             />
             <span>
@@ -132,6 +159,15 @@ export function LiveConversation({ level }: LiveConversationProps) {
 
       <Transcript turns={state.turns} onTranslate={state.phase === "live" ? translate : undefined} />
 
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Velocidad del audio">
+        <span className="text-xs text-muted">Velocidad del audio</span>
+        {LIVE_PLAYBACK_RATES.map((rate) => (
+          <Chip key={rate} selected={state.playbackRate === rate} onSelect={() => setPlaybackRate(rate)}>
+            {rate === 1 ? "Normal" : `${rate}×`}
+          </Chip>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={toggleMute} disabled={state.phase !== "live"} aria-pressed={state.muted}>
           {state.muted ? <MicOff className="h-4 w-4" aria-hidden="true" /> : <Mic className="h-4 w-4" aria-hidden="true" />}
@@ -142,6 +178,22 @@ export function LiveConversation({ level }: LiveConversationProps) {
         </Button>
       </div>
     </Card>
+  );
+}
+
+function Chip(props: { selected: boolean; onSelect: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={props.onSelect}
+      aria-pressed={props.selected}
+      className={cn(
+        "rounded-full border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        props.selected ? "border-primary/60 bg-primary/10 font-medium text-ink" : "border-line bg-card text-ink-2 hover:bg-hover",
+      )}
+    >
+      {props.children}
+    </button>
   );
 }
 

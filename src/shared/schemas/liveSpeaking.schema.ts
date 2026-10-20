@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIVE_PACE_IDS, LIVE_VOICES } from "../constants/liveVoices";
 
 export const liveSpeakingModeSchema = z.enum(["free", "scenario"]);
 export type LiveSpeakingMode = z.infer<typeof liveSpeakingModeSchema>;
@@ -9,6 +10,10 @@ export const startLiveSpeakingSchema = z
     scenarioId: z.string().min(1).max(60).optional(),
     /** Whether the tutor may gently correct mistakes while talking (otherwise it only does so at the end). */
     correctWhileTalking: z.boolean().default(false),
+    /** One of LIVE_VOICES; the server falls back to its default when omitted. */
+    voice: z.enum(LIVE_VOICES.map((voice) => voice.id) as [string, ...string[]]).optional(),
+    /** How fast the tutor talks: "auto" follows the student's level. */
+    pace: z.enum(LIVE_PACE_IDS).default("auto"),
   })
   .refine((value) => value.mode !== "scenario" || Boolean(value.scenarioId), {
     message: "Elegí una situación para practicar",

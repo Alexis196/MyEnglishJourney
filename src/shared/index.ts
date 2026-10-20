@@ -18,3 +18,4 @@ export * from "./constants/speakingQuestions";
 export * from "./constants/lessonStages";
 export * from "./schemas/liveSpeaking.schema";
 export * from "./constants/liveScenarios";
+export * from "./constants/liveVoices";

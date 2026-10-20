@@ -102,6 +102,8 @@ export async function startMicCapture(onChunk: (base64Pcm: string) => void): Pro
 
 export interface AudioPlayer {
   enqueue: (base64Pcm: string) => void;
+  /** Playback speed for what arrives from now on (1 = as received). */
+  setRate: (rate: number) => void;
   /** Drops everything queued (the student interrupted the tutor). */
   interrupt: () => void;
   /** True while queued audio is still playing. */
@@ -112,9 +114,13 @@ export interface AudioPlayer {
 export function createAudioPlayer(): AudioPlayer {
   const context = new AudioContext({ sampleRate: OUTPUT_RATE });
   let nextStart = 0;
+  let rate = 1;
   let sources: AudioBufferSourceNode[] = [];
 
   return {
+    setRate(next) {
+      rate = Math.min(1.5, Math.max(0.5, next));
+    },
     enqueue(base64Pcm) {
       const bytes = base64ToBytes(base64Pcm);
       const pcm = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2));
@@ -124,10 +130,11 @@ export function createAudioPlayer(): AudioPlayer {
       for (let i = 0; i < pcm.length; i += 1) channel[i] = pcm[i]! / 0x8000;
       const node = context.createBufferSource();
       node.buffer = buffer;
+      node.playbackRate.value = rate;
       node.connect(context.destination);
       nextStart = Math.max(context.currentTime + 0.02, nextStart);
       node.start(nextStart);
-      nextStart += buffer.duration;
+      nextStart += buffer.duration / rate;
       sources.push(node);
       node.onended = () => {
         sources = sources.filter((source) => source !== node);
