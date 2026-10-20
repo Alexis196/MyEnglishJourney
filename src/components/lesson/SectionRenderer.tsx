@@ -1,5 +1,6 @@
 "use client";
 
+import { SaveWordButton } from "../vocabulary/SaveWordButton";
 import { LESSON_STAGE_LABELS, type LessonSection } from "@myenglishjourney/shared";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
@@ -83,7 +84,16 @@ export function SectionRenderer({ section, lessonId }: { section: LessonSection;
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {section.content.vocabulary.map((item, i) => (
               <div key={i} className="rounded-xl bg-tint p-3 text-sm">
-                <p className="font-medium text-ink">{item.term}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-ink">{item.term}</p>
+                  <SaveWordButton
+                    term={item.term}
+                    translation={item.translation}
+                    exampleSentence={item.example}
+                    source="lesson"
+                    sourceLessonId={lessonId}
+                  />
+                </div>
                 <p className="text-muted">{item.translation}</p>
                 {item.example && <p className="mt-1 italic text-faint">"{item.example}"</p>}
               </div>

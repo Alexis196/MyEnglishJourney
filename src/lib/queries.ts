@@ -5,6 +5,8 @@ import type {
   LearningPlanListResponse,
   LessonDetail,
   Profile,
+  VocabularyListResponse,
+  VocabularyReviewQueue,
 } from "@myenglishjourney/shared";
 import { apiClient } from "./apiClient";
 import { STALE } from "./queryClient";
@@ -41,3 +43,18 @@ export const lessonQuery = (lessonId: string) =>
     queryFn: () => apiClient.get<LessonDetail>(`/api/lessons/${lessonId}`),
     staleTime: STALE.lesson,
   });
+
+export const vocabularyListQuery = queryOptions({
+  queryKey: ["vocabulary", "list"],
+  queryFn: () => apiClient.get<VocabularyListResponse>("/api/vocabulary"),
+  // Saving, editing, deleting and studying words all invalidate it.
+  staleTime: STALE.activity,
+});
+
+/** Always fresh: what is due changes as the clock moves and as the student studies. */
+export const vocabularyReviewQuery = queryOptions({
+  queryKey: ["vocabulary", "review"],
+  queryFn: () => apiClient.get<VocabularyReviewQueue>("/api/vocabulary/review"),
+  staleTime: 0,
+  gcTime: 0,
+});

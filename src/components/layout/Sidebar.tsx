@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard,
+  BookMarked,
   BookOpen,
   User,
   ChevronLeft,
@@ -23,6 +24,7 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/program", label: "Programa 90 días", icon: BookOpen },
   { to: "/speaking", label: "Speaking Lab", icon: Mic },
+  { to: "/vocabulary", label: "Vocabulario", icon: BookMarked },
   { to: "/profile", label: "Perfil", icon: User },
 ];
 
