@@ -50,6 +50,7 @@ vi.mock("./ai/index", () => ({
   buildLiveTutorInstruction: vi.fn(() => "INSTRUCTION"),
   buildLiveFeedbackSystemPrompt: vi.fn(() => "SYSTEM"),
   buildLiveFeedbackUserPrompt: vi.fn(() => "USER"),
+  buildLiveTranslationSystemPrompt: vi.fn((level: string) => `TRANSLATE_${level}`),
 }));
 const createLiveToken = vi.hoisted(() => vi.fn());
 vi.mock("./ai/liveToken", () => ({ createLiveToken }));
@@ -279,6 +280,38 @@ describe("live speaking: ending", () => {
   it("does not let one user end another user's conversation", async () => {
     const id = await startOne();
     await expect(liveSpeakingService.end(supabase, "someone-else", id, { durationSeconds: 5, turns })).rejects.toThrow("no encontrada");
+  });
+});
+
+describe("live speaking: translating what the tutor said", () => {
+  const translation = { translation: "¿Qué te gustaría tomar?", keyWords: [{ word: "drink", meaning: "bebida" }] };
+
+  it("translates one sentence for the student, using their level, while the conversation is open", async () => {
+    const started = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    ai.generate.mockResolvedValueOnce({ data: translation });
+
+    const result = await liveSpeakingService.translate(supabase, USER, started.sessionId, { text: "What would you like to drink?" });
+
+    expect(result).toEqual(translation);
+    expect(ai.generate).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({ userPrompt: "What would you like to drink?", systemPrompt: "TRANSLATE_A2", userId: USER }),
+    );
+  });
+
+  it("is not a general translator: it refuses once the conversation has ended", async () => {
+    const started = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    await liveSpeakingService.end(supabase, USER, started.sessionId, { durationSeconds: 1, turns: [] });
+    await expect(liveSpeakingService.translate(supabase, USER, started.sessionId, { text: "Hello" })).rejects.toMatchObject({
+      code: "live_not_active",
+    });
+    expect(ai.generate).not.toHaveBeenCalled();
+  });
+
+  it("does not translate for someone else's conversation", async () => {
+    const started = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    await expect(liveSpeakingService.translate(supabase, "someone-else", started.sessionId, { text: "Hello" })).rejects.toThrow("no encontrada");
+    expect(ai.generate).not.toHaveBeenCalled();
   });
 });
 

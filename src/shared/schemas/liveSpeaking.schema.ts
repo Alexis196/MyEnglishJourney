@@ -64,3 +64,16 @@ export const endLiveSpeakingResponseSchema = z.object({
   feedback: liveSpeakingFeedbackSchema.nullable(),
 });
 export type EndLiveSpeakingResponse = z.infer<typeof endLiveSpeakingResponseSchema>;
+
+/** Translate one thing the tutor said, so the student can understand words they do not know yet. */
+export const translateLiveTurnSchema = z.object({
+  text: z.string().trim().min(1).max(600),
+});
+export type TranslateLiveTurnInput = z.infer<typeof translateLiveTurnSchema>;
+
+export const liveTurnTranslationSchema = z.object({
+  translation: z.string(),
+  /** The few words of the sentence a learner at this level is most likely not to know. */
+  keyWords: z.array(z.object({ word: z.string(), meaning: z.string() })).max(5),
+});
+export type LiveTurnTranslation = z.infer<typeof liveTurnTranslationSchema>;

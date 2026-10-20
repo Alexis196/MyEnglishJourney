@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Info, Mic, MicOff, PhoneOff, Radio } from "lucide-react";
-import { CEFR_LEVELS, LIVE_SCENARIOS, type CefrLevel, type EndLiveSpeakingResponse } from "@myenglishjourney/shared";
-import { useLiveConversation } from "../../hooks/useLiveConversation";
+import { Info, Languages, Loader2, Mic, MicOff, PhoneOff, Radio } from "lucide-react";
+import {
+  CEFR_LEVELS,
+  LIVE_SCENARIOS,
+  type CefrLevel,
+  type EndLiveSpeakingResponse,
+  type LiveTurnTranslation,
+} from "@myenglishjourney/shared";
+import { useLiveConversation, type DisplayTurn } from "../../hooks/useLiveConversation";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { cn } from "../../utils/cn";
@@ -21,7 +27,7 @@ function formatClock(totalSeconds: number): string {
 }
 
 export function LiveConversation({ level }: LiveConversationProps) {
-  const { state, start, end, toggleMute, reset } = useLiveConversation();
+  const { state, start, end, toggleMute, translate, reset } = useLiveConversation();
   const [choice, setChoice] = useState<string>(MODE_FREE);
   const [correctWhileTalking, setCorrectWhileTalking] = useState(false);
 
@@ -124,7 +130,7 @@ export function LiveConversation({ level }: LiveConversationProps) {
         </div>
       </div>
 
-      <Transcript turns={state.turns} />
+      <Transcript turns={state.turns} onTranslate={state.phase === "live" ? translate : undefined} />
 
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={toggleMute} disabled={state.phase !== "live"} aria-pressed={state.muted}>
@@ -156,27 +162,78 @@ function ChoiceCard(props: { selected: boolean; onSelect: () => void; title: str
   );
 }
 
-function Transcript({ turns }: { turns: Array<{ role: "user" | "tutor"; text: string }> }) {
+type TranslationState = { status: "loading" } | { status: "error" } | { status: "ready"; data: LiveTurnTranslation };
+
+function Transcript({ turns, onTranslate }: { turns: DisplayTurn[]; onTranslate?: ((text: string) => Promise<LiveTurnTranslation>) | undefined }) {
   const endRef = useRef<HTMLDivElement>(null);
+  // Translations are kept by sentence, so asking again for the same one is free and instant.
+  const [translations, setTranslations] = useState<Record<string, TranslationState>>({});
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [turns]);
+  }, [turns, translations]);
+
+  const requestTranslation = async (text: string) => {
+    if (!onTranslate || translations[text]?.status === "loading" || translations[text]?.status === "ready") return;
+    setTranslations((prev) => ({ ...prev, [text]: { status: "loading" } }));
+    try {
+      const data = await onTranslate(text);
+      setTranslations((prev) => ({ ...prev, [text]: { status: "ready", data } }));
+    } catch {
+      setTranslations((prev) => ({ ...prev, [text]: { status: "error" } }));
+    }
+  };
 
   return (
     <div className="flex max-h-72 min-h-40 flex-col gap-2 overflow-y-auto rounded-xl bg-soft p-3" aria-label="Transcripción">
       {turns.length === 0 && <p className="text-sm text-faint">Tu tutor está por saludarte…</p>}
-      {turns.map((turn, index) => (
-        <div key={index} className={cn("flex", turn.role === "user" ? "justify-end" : "justify-start")}>
-          <p
-            className={cn(
-              "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
-              turn.role === "user" ? "bg-primary/15 text-ink" : "bg-card text-ink-2 shadow-card",
+      {turns.map((turn, index) => {
+        const isTutor = turn.role === "tutor";
+        const translation = translations[turn.text];
+        return (
+          <div key={index} className={cn("flex flex-col gap-1", isTutor ? "items-start" : "items-end")}>
+            <p
+              className={cn(
+                "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                isTutor ? "bg-card text-ink-2 shadow-card" : "bg-primary/15 text-ink",
+              )}
+            >
+              {turn.text}
+            </p>
+
+            {isTutor && !turn.partial && onTranslate && (!translation || translation.status === "error") && (
+              <button
+                type="button"
+                onClick={() => void requestTranslation(turn.text)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Languages className="h-3.5 w-3.5" aria-hidden="true" />
+                {translation?.status === "error" ? "No se pudo traducir. Reintentar" : "Traducir"}
+              </button>
             )}
-          >
-            {turn.text}
-          </p>
-        </div>
-      ))}
+            {translation?.status === "loading" && (
+              <span className="inline-flex items-center gap-1 px-2 text-xs text-muted">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Traduciendo…
+              </span>
+            )}
+            {translation?.status === "ready" && (
+              <div className="max-w-[85%] rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-ink-2">
+                <p>{translation.data.translation}</p>
+                {translation.data.keyWords.length > 0 && (
+                  <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                    {translation.data.keyWords.map((item) => (
+                      <li key={item.word} className="rounded-md bg-card px-2 py-0.5 text-xs">
+                        <span className="font-medium text-ink">{item.word}</span>
+                        <span className="text-muted"> = {item.meaning}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
       <div ref={endRef} />
     </div>
   );

@@ -3,12 +3,15 @@ import {
   CEFR_LEVELS,
   getLiveScenario,
   liveSpeakingFeedbackSchema,
+  liveTurnTranslationSchema,
   type CefrLevel,
   type EndLiveSpeakingInput,
   type EndLiveSpeakingResponse,
+  type LiveTurnTranslation,
   type LiveSpeakingFeedback,
   type StartLiveSpeakingInput,
   type StartLiveSpeakingResponse,
+  type TranslateLiveTurnInput,
 } from "@myenglishjourney/shared";
 import { env } from "../config/env";
 import { AppError, BudgetExceededError, ConflictError, NotFoundError } from "../utils/AppError";
@@ -23,6 +26,7 @@ import {
   AIUsageService,
   buildLiveFeedbackSystemPrompt,
   buildLiveFeedbackUserPrompt,
+  buildLiveTranslationSystemPrompt,
   buildLiveTutorInstruction,
 } from "./ai/index";
 import { createLiveToken } from "./ai/liveToken";
@@ -161,6 +165,27 @@ export const liveSpeakingService = {
       }
       throw new AppError("No pudimos iniciar la conversación. Probá de nuevo en un momento.", 503, "live_unavailable");
     }
+  },
+
+  /**
+   * Translates one thing the tutor said into Spanish (plus the hard words), on the student's request. Only while their
+   * conversation is open, so it cannot be used as a general-purpose translator.
+   */
+  async translate(supabase: SupabaseClient, userId: string, sessionId: string, input: TranslateLiveTurnInput): Promise<LiveTurnTranslation> {
+    const session = await liveSpeakingSessionRepository.getById(supabase, sessionId);
+    if (session.user_id !== userId) throw new NotFoundError("Sesión de conversación no encontrada");
+    if (session.status !== "active") throw new ConflictError("La conversación ya terminó.", "live_not_active");
+
+    const result = await aiRouter.generate(supabase, {
+      activityType: "chat",
+      systemPrompt: buildLiveTranslationSystemPrompt(asLevel(session.level)),
+      userPrompt: input.text,
+      responseSchema: liveTurnTranslationSchema,
+      userId,
+      temperature: 0.2,
+      maxOutputTokens: 512,
+    });
+    return result.data;
   },
 
   /**
