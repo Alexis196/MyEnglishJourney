@@ -6,6 +6,7 @@ import type {
   EndLiveSpeakingInput,
   EndLiveSpeakingResponse,
   LiveTurn,
+  LiveTurnTranslation,
   StartLiveSpeakingInput,
   StartLiveSpeakingResponse,
 } from "@myenglishjourney/shared";
@@ -14,10 +15,13 @@ import { createAudioPlayer, startMicCapture, type AudioPlayer, type MicCapture }
 
 export type LivePhase = "idle" | "connecting" | "live" | "ending" | "done" | "error";
 
+/** A turn as shown on screen: `partial` while it is still being spoken. */
+export type DisplayTurn = LiveTurn & { partial?: boolean };
+
 export interface LiveConversationState {
   phase: LivePhase;
   /** Finished turns plus the one being spoken right now. */
-  turns: LiveTurn[];
+  turns: DisplayTurn[];
   secondsLeft: number;
   scenarioTitle: string | null;
   muted: boolean;
@@ -66,7 +70,7 @@ export function useLiveConversation() {
 
   const publishTurns = useCallback(() => {
     const live = currentRef.current;
-    setState((prev) => ({ ...prev, turns: live ? [...turnsRef.current, { ...live }] : [...turnsRef.current] }));
+    setState((prev) => ({ ...prev, turns: live ? [...turnsRef.current, { ...live, partial: true }] : [...turnsRef.current] }));
   }, []);
 
   const flushCurrent = useCallback(() => {
@@ -213,6 +217,13 @@ export function useLiveConversation() {
     [end, handleMessage, releaseResources, state.phase],
   );
 
+  /** Spanish translation (and hard words) of something the tutor said; only works while the conversation is open. */
+  const translate = useCallback(async (text: string): Promise<LiveTurnTranslation> => {
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) throw new Error("No hay una conversación abierta");
+    return apiClient.post<LiveTurnTranslation>(`/api/speaking/live/${sessionId}/translate`, { text });
+  }, []);
+
   const toggleMute = useCallback(() => {
     setState((prev) => {
       const muted = !prev.muted;
@@ -233,5 +244,5 @@ export function useLiveConversation() {
     };
   }, [releaseResources]);
 
-  return { state, start, end, toggleMute, reset };
+  return { state, start, end, toggleMute, translate, reset };
 }

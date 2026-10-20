@@ -50,13 +50,10 @@ vi.mock("./ai/index", () => ({
   buildLiveTutorInstruction: vi.fn(() => "INSTRUCTION"),
   buildLiveFeedbackSystemPrompt: vi.fn(() => "SYSTEM"),
   buildLiveFeedbackUserPrompt: vi.fn(() => "USER"),
+  buildLiveTranslationSystemPrompt: vi.fn((level: string) => `TRANSLATE_${level}`),
 }));
-vi.mock("./ai/liveToken", () => ({
-  createLiveToken: vi.fn(async () => {
-    if (db.tokenFails) throw new Error(db.tokenError);
-    return "auth_tokens/abc";
-  }),
-}));
+const createLiveToken = vi.hoisted(() => vi.fn());
+vi.mock("./ai/liveToken", () => ({ createLiveToken }));
 vi.mock("../repositories/aiUsageLog.repository", () => ({
   aiUsageLogRepository: {
     insert: vi.fn(async (_s: unknown, input: { activityType: string; costUsd: number; status: string }) => {
@@ -142,6 +139,11 @@ beforeEach(() => {
   db.tokenError = "gemini down";
   env.LIVE_COST_PER_MINUTE_USD = 0.023;
   db.feedbackFails = false;
+  createLiveToken.mockReset();
+  createLiveToken.mockImplementation(async () => {
+    if (db.tokenFails) throw new Error(db.tokenError);
+    return "auth_tokens/abc";
+  });
   ai.generate.mockReset();
   ai.generate.mockImplementation(async () => {
     if (db.feedbackFails) throw new Error("model down");
@@ -156,6 +158,13 @@ describe("live speaking: starting", () => {
     expect(JSON.stringify(started)).not.toContain("AIza");
     expect(db.sessions).toHaveLength(1);
     expect(db.sessions[0]).toMatchObject({ level: "A2", status: "active" });
+  });
+
+  it("locks the tutor's rules inside the token, so the browser cannot change or drop them", async () => {
+    await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    expect(createLiveToken).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "gemini-3.8-live", maxSeconds: 300, systemInstruction: "INSTRUCTION", voice: "Kore" }),
+    );
   });
 
   it("starts a role-play from a known scenario and rejects an unknown one", async () => {
@@ -271,6 +280,38 @@ describe("live speaking: ending", () => {
   it("does not let one user end another user's conversation", async () => {
     const id = await startOne();
     await expect(liveSpeakingService.end(supabase, "someone-else", id, { durationSeconds: 5, turns })).rejects.toThrow("no encontrada");
+  });
+});
+
+describe("live speaking: translating what the tutor said", () => {
+  const translation = { translation: "¿Qué te gustaría tomar?", keyWords: [{ word: "drink", meaning: "bebida" }] };
+
+  it("translates one sentence for the student, using their level, while the conversation is open", async () => {
+    const started = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    ai.generate.mockResolvedValueOnce({ data: translation });
+
+    const result = await liveSpeakingService.translate(supabase, USER, started.sessionId, { text: "What would you like to drink?" });
+
+    expect(result).toEqual(translation);
+    expect(ai.generate).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({ userPrompt: "What would you like to drink?", systemPrompt: "TRANSLATE_A2", userId: USER }),
+    );
+  });
+
+  it("is not a general translator: it refuses once the conversation has ended", async () => {
+    const started = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    await liveSpeakingService.end(supabase, USER, started.sessionId, { durationSeconds: 1, turns: [] });
+    await expect(liveSpeakingService.translate(supabase, USER, started.sessionId, { text: "Hello" })).rejects.toMatchObject({
+      code: "live_not_active",
+    });
+    expect(ai.generate).not.toHaveBeenCalled();
+  });
+
+  it("does not translate for someone else's conversation", async () => {
+    const started = await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    await expect(liveSpeakingService.translate(supabase, "someone-else", started.sessionId, { text: "Hello" })).rejects.toThrow("no encontrada");
+    expect(ai.generate).not.toHaveBeenCalled();
   });
 });
 
