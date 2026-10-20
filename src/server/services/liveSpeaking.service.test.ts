@@ -51,12 +51,8 @@ vi.mock("./ai/index", () => ({
   buildLiveFeedbackSystemPrompt: vi.fn(() => "SYSTEM"),
   buildLiveFeedbackUserPrompt: vi.fn(() => "USER"),
 }));
-vi.mock("./ai/liveToken", () => ({
-  createLiveToken: vi.fn(async () => {
-    if (db.tokenFails) throw new Error(db.tokenError);
-    return "auth_tokens/abc";
-  }),
-}));
+const createLiveToken = vi.hoisted(() => vi.fn());
+vi.mock("./ai/liveToken", () => ({ createLiveToken }));
 vi.mock("../repositories/aiUsageLog.repository", () => ({
   aiUsageLogRepository: {
     insert: vi.fn(async (_s: unknown, input: { activityType: string; costUsd: number; status: string }) => {
@@ -142,6 +138,11 @@ beforeEach(() => {
   db.tokenError = "gemini down";
   env.LIVE_COST_PER_MINUTE_USD = 0.023;
   db.feedbackFails = false;
+  createLiveToken.mockReset();
+  createLiveToken.mockImplementation(async () => {
+    if (db.tokenFails) throw new Error(db.tokenError);
+    return "auth_tokens/abc";
+  });
   ai.generate.mockReset();
   ai.generate.mockImplementation(async () => {
     if (db.feedbackFails) throw new Error("model down");
@@ -156,6 +157,13 @@ describe("live speaking: starting", () => {
     expect(JSON.stringify(started)).not.toContain("AIza");
     expect(db.sessions).toHaveLength(1);
     expect(db.sessions[0]).toMatchObject({ level: "A2", status: "active" });
+  });
+
+  it("locks the tutor's rules inside the token, so the browser cannot change or drop them", async () => {
+    await liveSpeakingService.start(supabase, USER, { mode: "free", correctWhileTalking: false });
+    expect(createLiveToken).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "gemini-3.8-live", maxSeconds: 300, systemInstruction: "INSTRUCTION", voice: "Kore" }),
+    );
   });
 
   it("starts a role-play from a known scenario and rejects an unknown one", async () => {

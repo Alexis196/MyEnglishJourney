@@ -136,7 +136,7 @@ export const liveSpeakingService = {
     });
 
     try {
-      const token = await createLiveToken({ model, maxSeconds });
+      const token = await createLiveToken({ model, maxSeconds, systemInstruction: instruction, voice: TUTOR_VOICE });
       return {
         sessionId: session.id,
         token,
