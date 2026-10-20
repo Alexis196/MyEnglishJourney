@@ -9,6 +9,8 @@ import {
 } from "../../components/speaking/AudioRecorder";
 import { SpeakingCard } from "../../components/speaking/SpeakingCard";
 import { SpeakingFeedbackResult } from "../../components/speaking/SpeakingFeedbackResult";
+import { LiveConversation } from "../../components/speaking/LiveConversation";
+import { cn } from "../../utils/cn";
 import { useSubmitSpeakingRecording } from "../../hooks/useSubmitSpeakingRecording";
 import { useToast } from "../../context/ToastProvider";
 import { useLearningPlan } from "../../hooks/useLearningPlan";
@@ -21,7 +23,15 @@ import {
   type SpeakingQuestion,
 } from "@myenglishjourney/shared";
 
+type LabTab = "live" | "recorded";
+
+const TABS: Array<{ id: LabTab; label: string }> = [
+  { id: "live", label: "Conversación en vivo" },
+  { id: "recorded", label: "Preguntas grabadas" },
+];
+
 export function SpeakingLabPage() {
+  const [tab, setTab] = useState<LabTab>("live");
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: planData, isLoading: planLoading } = useLearningPlan();
   const [question, setQuestion] = useState<SpeakingQuestion | null>(null);
@@ -87,13 +97,33 @@ export function SpeakingLabPage() {
       <div>
         <h1 className="text-xl font-semibold text-ink">Speaking Lab</h1>
         <p className="text-sm text-muted">
-          Practicá respondiendo en voz alta. La IA analiza lo que dijiste.
+          Practicá hablando en voz alta, en vivo con tu tutor o respondiendo preguntas grabadas.
         </p>
       </div>
 
-      {!question ? (
-        <CardSkeleton />
-      ) : (
+      <div role="tablist" aria-label="Modo de práctica" className="flex w-fit gap-1 rounded-xl bg-soft p-1">
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.id}
+            onClick={() => setTab(item.id)}
+            className={cn(
+              "rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              tab === item.id ? "bg-card text-ink shadow-card" : "text-muted hover:text-ink-2",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "live" && <LiveConversation level={level} />}
+
+      {tab === "recorded" && !question && <CardSkeleton />}
+
+      {tab === "recorded" && question && (
         <SpeakingCard
           question={question.en}
           translation={question.es}
@@ -128,11 +158,11 @@ export function SpeakingLabPage() {
         </SpeakingCard>
       )}
 
-      {submitRecording.data && (
+      {tab === "recorded" && submitRecording.data && (
         <SpeakingFeedbackResult result={submitRecording.data} />
       )}
 
-      {submitRecording.data && (
+      {tab === "recorded" && submitRecording.data && (
         <Button variant="outline" onClick={handleNewQuestion} className="w-fit">
           Practicar otra pregunta
         </Button>
